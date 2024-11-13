@@ -6,7 +6,8 @@ RUN apt-get update && \
 #RUN pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu
 RUN apt update && apt install -y iputils-ping
 RUN apt install -y net-tools
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torch 
+#--index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install numpy
 
