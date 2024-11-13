@@ -14,7 +14,7 @@ def run(rank, size):
 def init_processes(rank, size, fn, backend='gloo'):
    """ Initialize the distributed environment. """
 #   os.environ['MASTER ADDR'] = '172.16.89.5'
-#   os.environ['MASTER PORT'] = '12321'
+#   os.environ['MASTER PORT'] = '29500'
    dist.init_process_group(backend, rank=rank, world_size=size)
    fn(rank, size)
 if __name__ == "__main__":
@@ -24,8 +24,10 @@ if __name__ == "__main__":
 #   parser.add_argument('--rank', metavar='number', required=True,
 #                        help='the rank of the process')
 #   args = parser.parse_args()
-   rank=0
+   rank=1
    init_processes(rank, size, run)
+#   torch.distributed.barrier()
+#   print("Message - all processes crossed barrier - from Rank ",rank)
 
 #   processes = []
 #   for rank in range(size):
@@ -33,7 +35,7 @@ if __name__ == "__main__":
 #   p.start()
 #   processes.append(p)
 #   for p in processes:
-#       p.join()
+#   p.join()
 #   torch.distributed.barrier()
    print("Message - all processes crossed barrier - from Rank ",rank)
 
