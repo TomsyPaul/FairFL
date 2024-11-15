@@ -18,13 +18,15 @@ def init_processes(rank, size, fn, backend='gloo'):
    dist.init_process_group(backend, rank=rank, world_size=size)
    fn(rank, size)
 if __name__ == "__main__":
-   size = 2
+#   size = 1
 
 #   parser = argparse.ArgumentParser(description='For passing rank')
 #   parser.add_argument('--rank', metavar='number', required=True,
 #                        help='the rank of the process')
 #   args = parser.parse_args()
-   rank=0
+#   rank=int(args.rank)
+   rank=int(os.environ["LOCAL_RANK"])
+   size=int(os.environ["LOCAL_WORLD_SIZE"])        
    init_processes(rank, size, run)
 
 #   processes = []
