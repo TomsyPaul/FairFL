@@ -23,11 +23,12 @@ do
  then
    if [ $i == "0" ]
    then
-     gnome-terminal --window -x bash -c "ssh -n tomsy@$ip docker exec c0 torchrun --nnodes=$size --node_rank=0 --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=n0:1234 run.py ; exec bash"
+     gnome-terminal --window -x bash -c "ssh -n tomsy@$ip docker exec c0 torchrun --nnodes=$size --node_rank=0 --rdzv_id=21 --rdzv_backend=c10d --rdzv_endpoint=n0:1234 run.py ; exec bash"
       
    else
      leaderip=`ssh -n tomsy@172.16.89.5 docker exec c0 ifconfig | cut -d":" -f2 | grep inet | tr -s " " | cut -d" " -f3 | head -n 1 `
-     gnome-terminal --window -x bash -c " ssh -n tomsy@$ip docker exec c$i torchrun --nnodes=$size --node_rank=$i --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=$leaderip:1234 run.py ; exec bash"
+     echo "Leader IP = $leaderip"
+     gnome-terminal --window -x bash -c " ssh -n tomsy@$ip docker exec c$i torchrun --nnodes=$size --node_rank=$i --rdzv_id=21 --rdzv_backend=c10d --rdzv_endpoint=$leaderip:1234 run1.py ; exec bash"
       
    fi
  ((i++))     	

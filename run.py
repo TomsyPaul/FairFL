@@ -25,9 +25,11 @@ if __name__ == "__main__":
 #                        help='the rank of the process')
 #   args = parser.parse_args()
 #   rank=int(args.rank)
-   rank=int(os.environ["LOCAL_RANK"])
-   size=int(os.environ["LOCAL_WORLD_SIZE"])        
-   init_processes(rank, size, run)
+#   rank=int(os.environ["LOCAL_RANK"])
+#   size=int(os.environ["LOCAL_WORLD_SIZE"])        
+    rank=0
+    size=2
+    init_processes(rank, size, run)
 
 #   processes = []
 #   for rank in range(size):
@@ -37,6 +39,6 @@ if __name__ == "__main__":
 #   for p in processes:
 #       p.join()
 #   torch.distributed.barrier()
-   print("Message - all processes crossed barrier - from Rank ",rank)
-
+    print("Message - all processes crossed barrier - from Rank ",rank)
+    dist.destroy_process_group()
 

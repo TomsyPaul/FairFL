@@ -38,5 +38,5 @@ if __name__ == "__main__":
 #   p.join()
 #   torch.distributed.barrier()
    print("Message - all processes crossed barrier - from Rank ",rank)
-
+   dist.destroy_process_group()
 

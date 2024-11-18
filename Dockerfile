@@ -9,4 +9,8 @@ RUN apt install -y openssh-client
 
 RUN apt install -y vim
 
+RUN pip install torch==2.4.0
+
+EXPOSE 1234
+
 ENTRYPOINT ["/bin/bash"]
