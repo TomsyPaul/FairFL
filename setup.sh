@@ -16,6 +16,7 @@ do
  then
 #   ssh tomsy@$ip "docker create -it --net test-net --hostname n$i  --name c$i 9446917617/mydfl-image:pytorch-docker" </dev/null
    ssh tomsy@$ip "docker create -it --net test-net --hostname n$i  --name c$i $image" </dev/null
+#    ssh tomsy@$ip "docker create -it --net host  --name c$i $image" </dev/null
    ((i++))     	
 #   echo "id=$i, ip=$ip"
  fi

@@ -9,7 +9,7 @@ RUN apt install -y openssh-client
 
 RUN apt install -y vim
 
-RUN pip install torch==2.4.0
+RUN pip install torch --upgrade
 
 EXPOSE 1234
 
