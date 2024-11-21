@@ -10,33 +10,26 @@ import argparse
 def run(rank, size):
    """ Distributed function to be implemented later. """
    print("Rank = ", rank)
-#   pass
+
 def init_processes(rank, size, fn, backend='gloo'):
    """ Initialize the distributed environment. """
-#   os.environ['MASTER ADDR'] = '172.16.89.5'
-#   os.environ['MASTER PORT'] = '29500'
    dist.init_process_group(backend, rank=rank, world_size=size)
    fn(rank, size)
+
 if __name__ == "__main__":
-   size = 2
+#    rank=int(os.environ['LOCAL_RANK'])
+    os.environ['GLOO_SOCKET_IFNAME']="eth0"
+    os.environ['MASTER_ADDR'] = 'n0'
+    os.environ['MASTER_PORT'] = '12321'    
+#    rank=1
+#    size=3
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rank", type=int)
+    parser.add_argument("--size", type=int)
+    args = parser.parse_args()
+    rank = int(args.rank)
+    size = int(args.size)
 
-#   parser = argparse.ArgumentParser(description='For passing rank')
-#   parser.add_argument('--rank', metavar='number', required=True,
-#                        help='the rank of the process')
-#   args = parser.parse_args()
-   rank=1
-   init_processes(rank, size, run)
-#   torch.distributed.barrier()
-#   print("Message - all processes crossed barrier - from Rank ",rank)
-
-#   processes = []
-#   for rank in range(size):
-#   p = Process(target=init_processes, args=(rank, size, run))
-#   p.start()
-#   processes.append(p)
-#   for p in processes:
-#   p.join()
-#   torch.distributed.barrier()
-   print("Message - all processes crossed barrier - from Rank ",rank)
-   dist.destroy_process_group()
+    init_processes(rank, size, run)
+    print("Message - all processes crossed barrier - from Rank ",rank)
 
