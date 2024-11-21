@@ -9,7 +9,7 @@ import argparse
 
 def run(rank, size):
    """ Distributed function to be implemented later. """
-   print("Rank = ", rank)
+   print("Rank =    ", rank)
 
 def init_processes(rank, size, fn, backend='gloo'):
    """ Initialize the distributed environment. """
