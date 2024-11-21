@@ -11,18 +11,12 @@ do
  then
    if [ $i == "0" ]
    then
-     gnome-terminal --window -x bash -c "ssh -n tomsy@$ip docker exec c0 python run.py --rank=0 --size=$size; exec bash"
+     runfile=run.py
    else
-#     leaderip=`ssh -n tomsy@172.16.89.5 docker exec c0 ifconfig | cut -d":" -f2 | grep inet | tr -s " " | cut -d" " -f3 | head -n 1 `
-#     echo "Leader IP = $leaderip"
-     if [ $i == "1" ]
-     then 
-        sleep 1
-     fi   
-     gnome-terminal --window -x bash -c "ssh -n tomsy@$ip docker exec c$i python run1.py --rank=$i --size=$size; exec bash"   
+     runfile=run1.py
    fi
+   gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python $runfile --rank=$i --size=$size; echo Output of $i; exec bash"   
  ((i++))     	
-     #echo "id=$i, ip=$line"
  fi
 done < hostips
 
