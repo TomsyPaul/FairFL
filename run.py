@@ -8,6 +8,7 @@ import argparse
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 from math import ceil
 from random import Random
@@ -61,6 +62,8 @@ class Net(nn.Module):
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
+        self.mydata=[]
+
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -101,10 +104,6 @@ def average_gradients(model):
             param.grad.data /= size
 
 
-
-
-
-
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
@@ -117,8 +116,10 @@ def run(rank, size):
 #    model = model.cuda(rank)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
+    model.mydata=torch.tensor(np.zeros(1)+rank+1)
+
     num_batches = ceil(len(train_set.dataset) / float(bsz))
-    for epoch in range(10):
+    for epoch in range(1):
         epoch_loss = 0.0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
@@ -133,6 +134,7 @@ def run(rank, size):
         print('Rank ',
               dist.get_rank(), ', epoch ', epoch, ': ',
               epoch_loss / num_batches)
+        print('Data ',int(model.mydata[0]))
 
 
 

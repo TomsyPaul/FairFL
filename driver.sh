@@ -10,7 +10,8 @@ then
 #  bash applytoall.sh 'docker image rm 9446917617/mydfl-image:pytorch-docker'
    bash copytoall.sh Dockerfile
    bash copytoall.sh run.py
-   bash copytoall.sh run1.py
+   bash copytoall.sh layout-up
+   bash copytoall.sh layout-down
    bash buildall.sh
    read
    bash setup.sh $2
