@@ -131,7 +131,7 @@ def my_average_gradients(model):
                            dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data+=model.mybuf
                   
-            torch.distributed.barrier()            
+                torch.distributed.barrier()            
 
 #Tree Downward
 
@@ -146,7 +146,7 @@ def my_average_gradients(model):
                            param.grad.data=model.mybuf
                   
 #            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
-            torch.distributed.barrier()            
+                torch.distributed.barrier()            
   
         
         
