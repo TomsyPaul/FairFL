@@ -107,6 +107,53 @@ def average_gradients(model):
             param.grad.data /= size
 
 
+def my_average_gradients(model):
+    """ Gradient averaging using Binomial Tree. """
+    size = dist.get_world_size()
+    rank = dist.get_rank()
+    with open('layout-up', newline='') as csvfile1:
+        btreedata1 = list(csv.reader(csvfile1))
+    with open('layout-down', newline='') as csvfile2:
+        btreedata2 = list(csv.reader(csvfile2))
+
+    
+    for param in model.parameters():
+        if type(param) is torch.Tensor:
+            model.mybuf=param.grad.data[:]
+            #Tree Upward
+            for i in range(int(math.log2(size))):
+#           for i in range(len(btreedata)):
+                for currentrow in btreedata1:
+                     if int(currentrow[2]) == i:
+                         if int(currentrow[0]) == rank:
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                     elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           param.grad.data+=model.mybuf
+                  
+            torch.distributed.barrier()            
+
+#Tree Downward
+
+            for i in range(int(math.log2(size))):
+#        for i in range(len(btreedata)):
+                for currentrow in btreedata2:
+                     if int(currentrow[2]) == i:
+                        if int(currentrow[0]) == rank:
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                        elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           param.grad.data=model.mybuf
+                  
+#            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
+            torch.distributed.barrier()            
+  
+        
+        
+#            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            param.grad.data /= size
+
+
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
@@ -119,11 +166,11 @@ def run(rank, size):
 #    model = model.cuda(rank)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
-    model.mydata=torch.tensor(np.zeros(1)+rank+1)
-    model.mybuf=torch.tensor(np.zeros(1))
-
     num_batches = ceil(len(train_set.dataset) / float(bsz))
-    for epoch in range(1):
+
+
+
+    for epoch in range(10):
         epoch_loss = 0.0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
@@ -133,45 +180,11 @@ def run(rank, size):
             loss = F.nll_loss(output, target)
             epoch_loss += loss
             loss.backward()
-            average_gradients(model)
+            my_average_gradients(model)
             optimizer.step()
-#        print('Rank ',
-#            dist.get_rank(), ', epoch ', epoch, ': ',
-#            epoch_loss / num_batches)
-
-#Tree Upward
-
-        with open('layout-up', newline='') as csvfile1:
-            btreedata1 = list(csv.reader(csvfile1))
-        for i in range(int(math.log2(size))):
-#        for i in range(len(btreedata)):
-            for currentrow in btreedata1:
-                if int(currentrow[2]) == i:
-                     if int(currentrow[0]) == rank:
-                           dist.send(tensor=model.mydata,dst=int(currentrow[1]))
-                     elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           model.mydata+=model.mybuf
-                  
-            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
-            torch.distributed.barrier()            
-
-#Tree Downward
-
-        with open('layout-down', newline='') as csvfile2:
-            btreedata2 = list(csv.reader(csvfile2))
-        for i in range(int(math.log2(size))):
-#        for i in range(len(btreedata)):
-            for currentrow in btreedata2:
-                if int(currentrow[2]) == i:
-                     if int(currentrow[0]) == rank:
-                           dist.send(tensor=model.mydata,dst=int(currentrow[1]))
-                     elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           model.mydata=model.mybuf
-                  
-            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
-            torch.distributed.barrier()            
+        print('Rank ',
+            dist.get_rank(), ', epoch ', epoch, ': ',
+            epoch_loss / num_batches)
 
 
 
