@@ -139,11 +139,13 @@ def run(rank, size):
 #            dist.get_rank(), ', epoch ', epoch, ': ',
 #            epoch_loss / num_batches)
 
-        with open('layout-up', newline='') as csvfile:
-            btreedata = list(csv.reader(csvfile))
-        for i in range(int(math.log2(8))):
+#Tree Upward
+
+        with open('layout-up', newline='') as csvfile1:
+            btreedata1 = list(csv.reader(csvfile1))
+        for i in range(int(math.log2(size))):
 #        for i in range(len(btreedata)):
-            for currentrow in btreedata:
+            for currentrow in btreedata1:
                 if int(currentrow[2]) == i:
                      if int(currentrow[0]) == rank:
                            dist.send(tensor=model.mydata,dst=int(currentrow[1]))
@@ -153,7 +155,23 @@ def run(rank, size):
                   
             print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
             torch.distributed.barrier()            
-#        print('Data ',int(model.mydata[0]))
+
+#Tree Downward
+
+        with open('layout-down', newline='') as csvfile2:
+            btreedata2 = list(csv.reader(csvfile2))
+        for i in range(int(math.log2(size))):
+#        for i in range(len(btreedata)):
+            for currentrow in btreedata2:
+                if int(currentrow[2]) == i:
+                     if int(currentrow[0]) == rank:
+                           dist.send(tensor=model.mydata,dst=int(currentrow[1]))
+                     elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           model.mydata=model.mybuf
+                  
+            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
+            torch.distributed.barrier()            
 
 
 
