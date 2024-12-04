@@ -9,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
+import math
+import csv
 
 from math import ceil
 from random import Random
@@ -63,6 +65,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
         self.mydata=[]
+        self.mybuf=[]
 
 
     def forward(self, x):
@@ -117,6 +120,7 @@ def run(rank, size):
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
     model.mydata=torch.tensor(np.zeros(1)+rank+1)
+    model.mybuf=torch.tensor(np.zeros(1))
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
     for epoch in range(1):
@@ -131,10 +135,25 @@ def run(rank, size):
             loss.backward()
             average_gradients(model)
             optimizer.step()
-        print('Rank ',
-              dist.get_rank(), ', epoch ', epoch, ': ',
-              epoch_loss / num_batches)
-        print('Data ',int(model.mydata[0]))
+#        print('Rank ',
+#            dist.get_rank(), ', epoch ', epoch, ': ',
+#            epoch_loss / num_batches)
+
+        with open('layout-up', newline='') as csvfile:
+            btreedata = list(csv.reader(csvfile))
+        for i in range(int(math.log2(8))):
+#        for i in range(len(btreedata)):
+            for currentrow in btreedata:
+                if int(currentrow[2]) == i:
+                     if int(currentrow[0]) == rank:
+                           dist.send(tensor=model.mydata,dst=int(currentrow[1]))
+                     elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           model.mydata+=model.mybuf
+                  
+            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
+            torch.distributed.barrier()            
+#        print('Data ',int(model.mydata[0]))
 
 
 
