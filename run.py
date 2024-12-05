@@ -102,7 +102,7 @@ def average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
     for param in model.parameters():
-        if type(param) is torch.Tensor:
+#        if type(param) is torch.Tensor:
             dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
@@ -170,7 +170,7 @@ def run(rank, size):
 
 
 
-    for epoch in range(100):
+    for epoch in range(10):
         epoch_loss = 0.0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
@@ -180,8 +180,8 @@ def run(rank, size):
             loss = F.nll_loss(output, target)
             epoch_loss += loss
             loss.backward()
-            my_average_gradients(model)
-#            average_gradients(model)
+#            my_average_gradients(model)
+            average_gradients(model)
             optimizer.step()
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
