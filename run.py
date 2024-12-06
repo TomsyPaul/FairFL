@@ -75,7 +75,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
-        return F.log_softmax(x)
+        return F.log_softmax(x, dim=1)
 
 
 def partition_dataset():
@@ -103,7 +103,7 @@ def average_gradients(model):
     size = float(dist.get_world_size())
     for param in model.parameters():
 #        if type(param) is torch.Tensor:
-            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
             param.grad.data /= size
 
 
@@ -118,7 +118,7 @@ def my_average_gradients(model):
 
     
     for param in model.parameters():
-        if type(param) is torch.Tensor:
+#        if type(param) is torch.Tensor:
             model.mybuf=param.grad.data[:]
             #Tree Upward
             for i in range(int(math.log2(size))):
@@ -127,11 +127,11 @@ def my_average_gradients(model):
                      if int(currentrow[2]) == i:
                          if int(currentrow[0]) == rank:
                            dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                     elif int(currentrow[1]) == rank:
+                         elif int(currentrow[1]) == rank:
                            dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data+=model.mybuf
                   
-                torch.distributed.barrier()            
+#                torch.distributed.barrier()            
 
 #Tree Downward
 
@@ -146,7 +146,7 @@ def my_average_gradients(model):
                            param.grad.data=model.mybuf
                   
 #            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
-                torch.distributed.barrier()            
+#                torch.distributed.barrier()            
   
         
         
@@ -170,7 +170,7 @@ def run(rank, size):
 
 
 
-    for epoch in range(10):
+    for epoch in range(1):
         epoch_loss = 0.0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
@@ -183,6 +183,7 @@ def run(rank, size):
 #            my_average_gradients(model)
             average_gradients(model)
             optimizer.step()
+#            break
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
