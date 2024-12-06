@@ -2,6 +2,8 @@
 #cd ~/mydfl
 #git pull https://tomsypaul@github.com/TomsyPaul/mydfl.git 
 coding=$1
+epochs=$2
+averager=$3
 if [ $coding == 'N' ]
 then
    bash applytoall.sh 'docker stop' c
@@ -14,9 +16,9 @@ then
    bash copytoall.sh layout-down
    bash buildall.sh
    read
-   bash setup.sh $2
+   bash setup.sh $4
    bash applytoall.sh 'docker start' c
 fi
-bash runscript.sh $coding
+bash runscript.sh $coding $epochs $averager
 
 
