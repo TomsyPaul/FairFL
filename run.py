@@ -142,6 +142,46 @@ def my_average_gradients(model):
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
+def async_average_gradients(model):
+    """ Gradient averaging using Binomial Tree, asynchronous. """
+#    print("Using ADFL")
+    size = dist.get_world_size()
+    rank = dist.get_rank()
+    with open('layout-up', newline='') as csvfile1:
+        btreedata1 = list(csv.reader(csvfile1))
+    with open('layout-down', newline='') as csvfile2:
+        btreedata2 = list(csv.reader(csvfile2))
+
+    for param in model.parameters():
+#        if type(param) is torch.Tensor:
+            model.mybuf=copy.deepcopy(param.grad.data)
+#            model.testbuf=torch.tensor(np.zeros(1))
+            #Tree Upward
+#           for i in range(int(math.log2(size))):
+#           for i in range(len(btreedata)):
+            for currentrow in btreedata1:
+                         if int(currentrow[0]) == rank:
+                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
+                           req.wait()
+                         elif int(currentrow[1]) == rank:
+                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
+                           req.wait()
+                           param.grad.data+=model.mybuf
+
+#Tree Downward
+
+            for currentrow in btreedata2:
+                        if int(currentrow[0]) == rank:
+                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
+                           req.wait()
+                        elif int(currentrow[1]) == rank:
+                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
+                           req.wait()
+                           param.grad.data=model.mybuf
+#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            param.grad.data /= size
+
+
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
@@ -168,6 +208,8 @@ def run(rank, size, epochs, averager):
             loss.backward()
             if averager == "DFL":
                my_average_gradients(model)
+            elif averager == "ADFL":
+               async_average_gradients(model)
             else:
                average_gradients(model)
             optimizer.step()
