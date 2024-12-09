@@ -198,7 +198,7 @@ def run(rank, size, epochs, K, averager, runid):
     num_batches = ceil(len(train_set.dataset) / float(bsz))
 
     LOG_FILE = "/logs/"+str(runid)
-    logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+    logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     
 
     for epoch in range(epochs):

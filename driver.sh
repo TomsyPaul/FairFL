@@ -1,6 +1,7 @@
 #! /bin/bash
 #cd ~/mydfl
 #git pull https://tomsypaul@github.com/TomsyPaul/mydfl.git 
+mkdir -p results
 coding=$1
 epochs=$2
 averager=$3
@@ -23,5 +24,6 @@ then
 fi
 echo $runid>>logslist
 bash runscript.sh $coding $epochs $averager $K $runid
-
-
+read
+bash applytoallcontainers.sh "cat /logs/$runid;echo" > "results/$runid"
+bash close-all-terminals.sh
