@@ -12,6 +12,7 @@ import numpy as np
 import math
 import csv
 import copy
+import logging
 
 from math import ceil
 from random import Random
@@ -185,7 +186,7 @@ def async_average_gradients(model):
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
-def run(rank, size, epochs, K, averager):
+def run(rank, size, epochs, K, averager, runid):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, bsz = partition_dataset()
@@ -195,6 +196,10 @@ def run(rank, size, epochs, K, averager):
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
+
+    LOG_FILE = "/logs/"+str(runid)
+    logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+    
 
     for epoch in range(epochs):
         epoch_loss = 0.0
@@ -220,13 +225,15 @@ def run(rank, size, epochs, K, averager):
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
+        logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
+        
 
 
 
-def init_processes(rank, size, epochs, K, averager, fn, backend='gloo'):
+def init_processes(rank, size, epochs, K, averager, runid, fn, backend='gloo'):
    """ Initialize the distributed environment. """
    dist.init_process_group(backend, rank=rank, world_size=size)
-   fn(rank, size, epochs, K, averager)
+   fn(rank, size, epochs, K, averager, runid)
 
 if __name__ == "__main__":
 #    rank=int(os.environ['LOCAL_RANK'])
@@ -241,11 +248,12 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--averager", type=str)
     parser.add_argument("--K", type=int)
+    parser.add_argument("--runid", type=str)
     args = parser.parse_args()
     rank = int(args.rank)
     size = int(args.size)
     epochs = int(args.epochs)
     averager = args.averager
     K = int(args.K)
-
-    init_processes(rank, size, epochs, K, averager, run)
+    runid = args.runid
+    init_processes(rank, size, epochs, K, averager, runid, run)

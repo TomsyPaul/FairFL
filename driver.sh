@@ -5,6 +5,7 @@ coding=$1
 epochs=$2
 averager=$3
 K=$4
+runid=`date +'%Y-%m-%d_%H-%M-%S'`
 if [ $coding == 'N' ]
 then
    bash applytoall.sh 'docker stop' c
@@ -20,6 +21,7 @@ then
    bash setup.sh $5
    bash applytoall.sh 'docker start' c
 fi
-bash runscript.sh $coding $epochs $averager $K
+echo $runid>>logslist
+bash runscript.sh $coding $epochs $averager $K $runid
 
 
