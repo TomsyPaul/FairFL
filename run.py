@@ -185,7 +185,7 @@ def async_average_gradients(model):
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
-def run(rank, size, epochs, averager):
+def run(rank, size, epochs, K, averager):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, bsz = partition_dataset()
@@ -198,6 +198,7 @@ def run(rank, size, epochs, averager):
 
     for epoch in range(epochs):
         epoch_loss = 0.0
+        skip=0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
 #            data, target = Variable(data.cuda(rank)), Variable(target.cuda(rank))
@@ -206,12 +207,14 @@ def run(rank, size, epochs, averager):
             loss = F.nll_loss(output, target)
             epoch_loss += loss
             loss.backward()
-            if averager == "DFL":
-               my_average_gradients(model)
-            elif averager == "ADFL":
-               async_average_gradients(model)
-            else:
-               average_gradients(model)
+            skip += 1
+            if (skip % K) == 0:
+               if averager == "DFL":
+                  my_average_gradients(model)
+               elif averager == "ADFL":
+                  async_average_gradients(model)
+               else:
+                  average_gradients(model)
             optimizer.step()
 #            break
         print('Rank ',
@@ -220,10 +223,10 @@ def run(rank, size, epochs, averager):
 
 
 
-def init_processes(rank, size, epochs, averager, fn, backend='gloo'):
+def init_processes(rank, size, epochs, K, averager, fn, backend='gloo'):
    """ Initialize the distributed environment. """
    dist.init_process_group(backend, rank=rank, world_size=size)
-   fn(rank, size, epochs, averager)
+   fn(rank, size, epochs, K, averager)
 
 if __name__ == "__main__":
 #    rank=int(os.environ['LOCAL_RANK'])
@@ -237,10 +240,12 @@ if __name__ == "__main__":
     parser.add_argument("--size", type=int)
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--averager", type=str)
+    parser.add_argument("--K", type=int)
     args = parser.parse_args()
     rank = int(args.rank)
     size = int(args.size)
     epochs = int(args.epochs)
     averager = args.averager
+    K = int(args.K)
 
-    init_processes(rank, size, epochs, averager, run)
+    init_processes(rank, size, epochs, K, averager, run)
