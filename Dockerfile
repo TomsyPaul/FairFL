@@ -7,4 +7,9 @@ COPY layout-down /workspace/layout-down
 
 RUN mkdir /logs
 
+RUN apt update && apt install -y tzdata
+
+ENV TZ=Asia/Kolkata
+
+
 ENTRYPOINT ["/bin/bash"]

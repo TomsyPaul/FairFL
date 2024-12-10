@@ -25,5 +25,13 @@ fi
 echo $runid>>logslist
 bash runscript.sh $coding $epochs $averager $K $runid
 read
-bash applytoallcontainers.sh "cat /logs/$runid;echo" > "results/$runid"
+echo "$2,$3,$K,$runid" > "results/$runid"
+echo -e "******************\n" >> "results/$runid"
+bash applytoallcontainers.sh "cat /logs/$runid;echo" >> "results/$runid"
+echo -e "Result..\n"
+cat results/$runid
+echo "$2,$3,$K,$runid" >> "results/summary"
+grep TIME results/$runid | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n\n"; }' >> results/summary
+
+
 bash close-all-terminals.sh

@@ -229,7 +229,7 @@ def run(rank, size, epochs, K, averager, runid):
         logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
     
     endtime = time.time()
-    print(end - start)
+    print(endtime - starttime)
     logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")    
 
 
