@@ -13,6 +13,7 @@ import math
 import csv
 import copy
 import logging
+import time
 
 from math import ceil
 from random import Random
@@ -199,7 +200,7 @@ def run(rank, size, epochs, K, averager, runid):
 
     LOG_FILE = "/logs/"+str(runid)
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
-    
+    starttime = time.time()
 
     for epoch in range(epochs):
         epoch_loss = 0.0
@@ -226,7 +227,10 @@ def run(rank, size, epochs, K, averager, runid):
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
         logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
-        
+    
+    endtime = time.time()
+    print(end - start)
+    logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")    
 
 
 
