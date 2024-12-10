@@ -11,6 +11,9 @@ import torch.optim as optim
 import numpy as np
 import math
 import csv
+import copy
+import logging
+import time
 
 from math import ceil
 from random import Random
@@ -64,9 +67,7 @@ class Net(nn.Module):
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
-        self.mydata=[]
         self.mybuf=[]
-
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -75,7 +76,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
-        return F.log_softmax(x)
+        return F.log_softmax(x, dim=1)
 
 
 def partition_dataset():
@@ -102,13 +103,14 @@ def average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
     for param in model.parameters():
-        if type(param) is torch.Tensor:
-            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+#        if type(param) is torch.Tensor:
+            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
             param.grad.data /= size
 
 
 def my_average_gradients(model):
     """ Gradient averaging using Binomial Tree. """
+#    print("Using DFL")
     size = dist.get_world_size()
     rank = dist.get_rank()
     with open('layout-up', newline='') as csvfile1:
@@ -116,48 +118,76 @@ def my_average_gradients(model):
     with open('layout-down', newline='') as csvfile2:
         btreedata2 = list(csv.reader(csvfile2))
 
-    
     for param in model.parameters():
-        if type(param) is torch.Tensor:
-            model.mybuf=param.grad.data[:]
+#        if type(param) is torch.Tensor:
+            model.mybuf=copy.deepcopy(param.grad.data)
+#            model.testbuf=torch.tensor(np.zeros(1))
             #Tree Upward
-            for i in range(int(math.log2(size))):
+#           for i in range(int(math.log2(size))):
 #           for i in range(len(btreedata)):
-                for currentrow in btreedata1:
-                     if int(currentrow[2]) == i:
+            for currentrow in btreedata1:
                          if int(currentrow[0]) == rank:
                            dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                     elif int(currentrow[1]) == rank:
+                           
+                         elif int(currentrow[1]) == rank:
                            dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data+=model.mybuf
-                  
-                torch.distributed.barrier()            
 
 #Tree Downward
 
-            for i in range(int(math.log2(size))):
-#        for i in range(len(btreedata)):
-                for currentrow in btreedata2:
-                     if int(currentrow[2]) == i:
+            for currentrow in btreedata2:
                         if int(currentrow[0]) == rank:
                            dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
                         elif int(currentrow[1]) == rank:
                            dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data=model.mybuf
-                  
-#            print('Rank=',rank,'i=',i,'mydata=', model.mydata[0],'mybuf=',model.mybuf[0]) 
-                torch.distributed.barrier()            
-  
-        
-        
-#            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            param.grad.data /= size
+
+def async_average_gradients(model):
+    """ Gradient averaging using Binomial Tree, asynchronous. """
+#    print("Using ADFL")
+    size = dist.get_world_size()
+    rank = dist.get_rank()
+    with open('layout-up', newline='') as csvfile1:
+        btreedata1 = list(csv.reader(csvfile1))
+    with open('layout-down', newline='') as csvfile2:
+        btreedata2 = list(csv.reader(csvfile2))
+
+    for param in model.parameters():
+#        if type(param) is torch.Tensor:
+            model.mybuf=copy.deepcopy(param.grad.data)
+#            model.testbuf=torch.tensor(np.zeros(1))
+            #Tree Upward
+#           for i in range(int(math.log2(size))):
+#           for i in range(len(btreedata)):
+            for currentrow in btreedata1:
+                         if int(currentrow[0]) == rank:
+                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
+                           req.wait()
+                         elif int(currentrow[1]) == rank:
+                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
+                           req.wait()
+                           param.grad.data+=model.mybuf
+
+#Tree Downward
+
+            for currentrow in btreedata2:
+                        if int(currentrow[0]) == rank:
+                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
+                           req.wait()
+                        elif int(currentrow[1]) == rank:
+                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
+                           req.wait()
+                           param.grad.data=model.mybuf
+#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
 
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
-def run(rank, size):
+def run(rank, size, epochs, K, averager, runid):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, bsz = partition_dataset()
@@ -168,10 +198,13 @@ def run(rank, size):
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
 
+    LOG_FILE = "/logs/"+str(runid)
+    logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
+    starttime = time.time()
 
-
-    for epoch in range(100):
+    for epoch in range(epochs):
         epoch_loss = 0.0
+        skip=0
         for data, target in train_set:
             data, target = Variable(data), Variable(target)
 #            data, target = Variable(data.cuda(rank)), Variable(target.cuda(rank))
@@ -180,19 +213,31 @@ def run(rank, size):
             loss = F.nll_loss(output, target)
             epoch_loss += loss
             loss.backward()
-            my_average_gradients(model)
-#            average_gradients(model)
+            skip += 1
+            if (skip % K) == 0:
+               if averager == "DFL":
+                  my_average_gradients(model)
+               elif averager == "ADFL":
+                  async_average_gradients(model)
+               else:
+                  average_gradients(model)
             optimizer.step()
+#            break
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
+        logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
+    
+    endtime = time.time()
+    print(endtime - starttime)
+    logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")    
 
 
 
-def init_processes(rank, size, fn, backend='gloo'):
+def init_processes(rank, size, epochs, K, averager, runid, fn, backend='gloo'):
    """ Initialize the distributed environment. """
    dist.init_process_group(backend, rank=rank, world_size=size)
-   fn(rank, size)
+   fn(rank, size, epochs, K, averager, runid)
 
 if __name__ == "__main__":
 #    rank=int(os.environ['LOCAL_RANK'])
@@ -204,8 +249,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--rank", type=int)
     parser.add_argument("--size", type=int)
+    parser.add_argument("--epochs", type=int)
+    parser.add_argument("--averager", type=str)
+    parser.add_argument("--K", type=int)
+    parser.add_argument("--runid", type=str)
     args = parser.parse_args()
     rank = int(args.rank)
     size = int(args.size)
-
-    init_processes(rank, size, run)
+    epochs = int(args.epochs)
+    averager = args.averager
+    K = int(args.K)
+    runid = args.runid
+    init_processes(rank, size, epochs, K, averager, runid, run)
