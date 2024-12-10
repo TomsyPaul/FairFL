@@ -2,5 +2,4 @@
 for i in `ps -A | grep bash | tail -n+2 | tr -s " " | cut -d" " -f2`
 do
 kill "$i"
-sleep 0.1
 done

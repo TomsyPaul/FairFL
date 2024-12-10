@@ -20,6 +20,8 @@ from random import Random
 from torch.autograd import Variable
 from torchvision import datasets, transforms
 
+secrets=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,-2.8]
+
 
 class Partition(object):
     """ Dataset-like object, but only access a subset of it. """
@@ -98,17 +100,7 @@ def partition_dataset():
         partition, batch_size=bsz, shuffle=True)
     return train_set, bsz
 
-
-def average_gradients(model):
-    """ Gradient averaging. """
-    size = float(dist.get_world_size())
-    for param in model.parameters():
-#        if type(param) is torch.Tensor:
-            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
-            param.grad.data /= size
-
-
-def my_average_gradients(model):
+def basic_average_gradients(model):
     """ Gradient averaging using Binomial Tree. """
 #    print("Using DFL")
     size = dist.get_world_size()
@@ -144,9 +136,9 @@ def my_average_gradients(model):
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
-def async_average_gradients(model):
-    """ Gradient averaging using Binomial Tree, asynchronous. """
-#    print("Using ADFL")
+def my_average_gradients(model):
+    """ Gradient averaging using Binomial Tree with SS """
+#    print("Using DFL")
     size = dist.get_world_size()
     rank = dist.get_rank()
     with open('layout-up', newline='') as csvfile1:
@@ -163,26 +155,71 @@ def async_average_gradients(model):
 #           for i in range(len(btreedata)):
             for currentrow in btreedata1:
                          if int(currentrow[0]) == rank:
-                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
-                           req.wait()
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                           
                          elif int(currentrow[1]) == rank:
-                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
-                           req.wait()
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data+=model.mybuf
 
 #Tree Downward
 
             for currentrow in btreedata2:
                         if int(currentrow[0]) == rank:
-                           req = dist.isend(tensor=param.grad.data,dst=int(currentrow[1]))
-                           req.wait()
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
                         elif int(currentrow[1]) == rank:
-                           req = dist.irecv(tensor=model.mybuf,src=int(currentrow[0]))
-                           req.wait()
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
                            param.grad.data=model.mybuf
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
+def Add_SS(v, n, seed):
+    vlist = []
+    rnd=Random()
+    rnd.seed(seed)
+    r=[]
+    for i in range(n):
+        r += [rnd.random()]
+    vstar = v/n
+    for i in range(n-1):
+        vlist += [vstar + r[i] - r[i+1]]
+    vlist += [vstar + r[n-1] - r[0]]
+    return vlist    
+
+def their_average_gradients(model):
+    """ Gradient averaging using LiPFed """
+    size = dist.get_world_size()
+    rank = dist.get_rank()
+    with open('layout-up', newline='') as csvfile1:
+        btreedata1 = list(csv.reader(csvfile1))
+    with open('layout-down', newline='') as csvfile2:
+        btreedata2 = list(csv.reader(csvfile2))
+
+    for param in model.parameters():
+#        if type(param) is torch.Tensor:
+            model.mybuf=copy.deepcopy(param.grad.data)
+#            model.testbuf=torch.tensor(np.zeros(1))
+            #Tree Upward
+#           for i in range(int(math.log2(size))):
+#           for i in range(len(btreedata)):
+            for currentrow in btreedata1:
+                         if int(currentrow[0]) == rank:
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                           
+                         elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           param.grad.data+=model.mybuf
+
+#Tree Downward
+
+            for currentrow in btreedata2:
+                        if int(currentrow[0]) == rank:
+                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                        elif int(currentrow[1]) == rank:
+                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
+                           param.grad.data=model.mybuf
+#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            param.grad.data /= size
+     
 
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
@@ -215,12 +252,12 @@ def run(rank, size, epochs, K, averager, runid):
             loss.backward()
             skip += 1
             if (skip % K) == 0:
-               if averager == "DFL":
-                  my_average_gradients(model)
-               elif averager == "ADFL":
-                  async_average_gradients(model)
-               else:
-                  average_gradients(model)
+               if averager == "DFLBASIC":
+                  basic_average_gradients(model)
+               elif averager == "DFLMSS":
+                  my_average_gradients(model)                  
+               elif averager == "DFLTSS":
+                  their_average_gradients(model)
             optimizer.step()
 #            break
         print('Rank ',
