@@ -70,6 +70,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
         self.mybuf=[]
+        self.splitbuf[]
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -189,25 +190,40 @@ def their_average_gradients(model):
     """ Gradient averaging using LiPFed """
     size = dist.get_world_size()
     rank = dist.get_rank()
-    with open('layout-up', newline='') as csvfile1:
+    with open('layout', newline='') as csvfile1:
         btreedata1 = list(csv.reader(csvfile1))
-    with open('layout-down', newline='') as csvfile2:
-        btreedata2 = list(csv.reader(csvfile2))
-
+    seedvalue=100
     for param in model.parameters():
-#        if type(param) is torch.Tensor:
+            first_receiving = True
             model.mybuf=copy.deepcopy(param.grad.data)
-#            model.testbuf=torch.tensor(np.zeros(1))
-            #Tree Upward
-#           for i in range(int(math.log2(size))):
-#           for i in range(len(btreedata)):
+            model.splitbuf=copy.deepcopy(param.grad.data)
+
+            #Split and Send
+
+            edge_source=[currentrow[0] for  currentrow in btreedata1]
+
+            #splits give the number of edges of a node - the number of splits of parameters, split[i]=edges connected to i
+            splits=[edge_source.count(str(i)) for i in range(size)]
+            
+            nodeindex=-1
             for currentrow in btreedata1:
+                         nodeindex += 1
+                         number_of_splits=splits(rank)
                          if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
+                           splitparam=Add_SS(param.grad.data, number_of_splits, seedvalue):
+                           for j in range(number_of_splits)
+                               targetnode=int(btreedata1[nodeindex][1])
+                               dist.send(tensor=splitparam[j],dst=targetnode)
+                               nodeindex += 1
+                               
+                               
                            
                          elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data+=model.mybuf
+                           dist.recv(tensor=model.splibuf,src=int(currentrow[0]))
+                           if first_receiving == True:
+                                model.mybuf=model.splitbuf
+                           else:     
+                                model.mybuf+=model.splitbuf
 
 #Tree Downward
 
