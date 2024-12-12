@@ -17,6 +17,7 @@ then
    bash copytoall.sh run.py
    bash copytoall.sh layout-up
    bash copytoall.sh layout-down
+   bash copytoall.sh layout
    bash buildall.sh
    read
    bash setup.sh $5

@@ -70,7 +70,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
         self.mybuf=[]
-        self.splitbuf[]
+        self.splitbuf=[]
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -205,37 +205,30 @@ def their_average_gradients(model):
             #splits give the number of edges of a node - the number of splits of parameters, split[i]=edges connected to i
             splits=[edge_source.count(str(i)) for i in range(size)]
             
-            nodeindex=-1
-            for currentrow in btreedata1:
-                         nodeindex += 1
-                         number_of_splits=splits(rank)
-                         if int(currentrow[0]) == rank:
-                           splitparam=Add_SS(param.grad.data, number_of_splits, seedvalue):
-                           for j in range(number_of_splits)
-                               targetnode=int(btreedata1[nodeindex][1])
+            #Send splits.. also receive :-)  Here was a bug when there were two for loops in place of the while..
+            rowindex=0
+            while rowindex < len(btreedata1):
+                         if int(btreedata1[rowindex][0]) == rank:
+                           number_of_splits=splits[rank]
+                           splitparam=Add_SS(param.grad.data, number_of_splits, seedvalue)
+                           for j in range(number_of_splits):
+                               targetnode=int(btreedata1[rowindex][1])
                                dist.send(tensor=splitparam[j],dst=targetnode)
-                               nodeindex += 1
-                               
-                               
-                           
-                         elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.splibuf,src=int(currentrow[0]))
+                               rowindex += 1
+                         elif int(btreedata1[rowindex][1]) == rank:
+                           dist.recv(tensor=model.splitbuf,src=int(btreedata1[rowindex][0]))
                            if first_receiving == True:
                                 model.mybuf=model.splitbuf
+                                first_receiving = False
                            else:     
                                 model.mybuf+=model.splitbuf
-
-#Tree Downward
-
-            for currentrow in btreedata2:
-                        if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                        elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data=model.mybuf
-#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+                           rowindex += 1
+                         else:
+                           rowindex += 1       
+            dist.barrier()
+            dist.all_reduce(model.mybuf, op=dist.reduce_op.SUM)
+            param.grad.data = model.mybuf
             param.grad.data /= size
-     
 
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
@@ -275,12 +268,10 @@ def run(rank, size, epochs, K, averager, runid):
                elif averager == "DFLTSS":
                   their_average_gradients(model)
             optimizer.step()
-#            break
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
         logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
-    
     endtime = time.time()
     print(endtime - starttime)
     logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")    
