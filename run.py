@@ -218,7 +218,7 @@ def their_average_gradients(model):
                          elif int(btreedata1[rowindex][1]) == rank:
                            dist.recv(tensor=model.splitbuf,src=int(btreedata1[rowindex][0]))
                            if first_receiving == True:
-                                model.mybuf=model.splitbuf
+                                model.mybuf=copy.deepcopy(model.splitbuf)
                                 first_receiving = False
                            else:     
                                 model.mybuf+=model.splitbuf
