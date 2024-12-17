@@ -59,7 +59,6 @@ class DataPartitioner(object):
 
 class Net(nn.Module):
     """ Network architecture. """
-
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
@@ -70,8 +69,7 @@ class Net(nn.Module):
         self.mybuf=[]
         self.splitbuf=[]
         self.secret=float(0)
-        self.aux=dict(isleaf:False,partner:0,adder:False,key:"1234567890")
-
+        self.aux=dict(isleaf=False,partner=0,adder=False,key="1234567890")
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
@@ -138,15 +136,16 @@ def basic_average_gradients(model):
             param.grad.data /= size
 
 def getnextadjustment(key):
-    yield 0
+    while True:
+       yield 0
 
-def set_leaf_pair_adder(rank, model);
+def set_leaf_pair_adder(rank, size, model):
     with open('layout-up', newline='') as csvfile1:
         btreedata1 = list(csv.reader(csvfile1))
     edge_dest=[currentrow[1] for currentrow in btreedata1]
-    if rank not in edgeset:
+    if rank not in edge_dest:
         model.aux["isleaf"]=True
-        if rank % (dist.get_world_size()/2) == 0:           
+        if rank % (size/2) == 0:           
            model.aux["adder"]=True
            model.aux["partner"] = rank + 2
         else:
@@ -172,9 +171,8 @@ def my_average_gradients(model):
 #            model.testbuf=torch.tensor(np.zeros(1))
             additive = model.secret
             if model.aux["isleaf"] == True:
-                nextadjustment = getnextadjustment(model.aux["key"])
                 if model.aux["adder"] == True:
-                    additive += nextadjustment
+                    additive += next(nextadjustment)
                 else:
                     additive -= nextadjustment
             param.grad.data += additive    
@@ -276,7 +274,7 @@ def run(rank, size, epochs, K, averager, runid):
     starttime = time.time()
     
     if averager == "DFLMSS":
-        set_leaf_pair_adder(rank, model)
+        set_leaf_pair_adder(rank, size, model)
         with open('secrets', newline='') as csvfile3:
             thesecrets = list(csv.reader(csvfile3))
             model.secret=float(thesecrets[rank][0])
@@ -284,6 +282,7 @@ def run(rank, size, epochs, K, averager, runid):
             with open('keys', newline='') as csvfile4:
                 allkeys = list(csv.reader(csvfile4))
                 model.aux["key"]=allkeys[rank//(size/2)][0]
+            nextadjustment = getnextadjustment(model.aux["key"])
             
 
     

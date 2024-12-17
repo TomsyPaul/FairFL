@@ -18,6 +18,8 @@ then
    bash copytoall.sh layout-up
    bash copytoall.sh layout-down
    bash copytoall.sh layout
+   bash copytoall.sh keys
+   bash copytoall.sh secrets
    bash buildall.sh
    read
    bash setup.sh $5
