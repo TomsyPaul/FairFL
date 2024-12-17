@@ -14,14 +14,12 @@ import csv
 import copy
 import logging
 import time
+from hashlib import sha256
 
 from math import ceil
 from random import Random
 from torch.autograd import Variable
 from torchvision import datasets, transforms
-
-secrets=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,-2.8]
-
 
 class Partition(object):
     """ Dataset-like object, but only access a subset of it. """
@@ -71,6 +69,8 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50, 10)
         self.mybuf=[]
         self.splitbuf=[]
+        self.secret=float(0)
+        self.aux=dict(isleaf:False,partner:0,adder:False,key:"1234567890")
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -137,6 +137,25 @@ def basic_average_gradients(model):
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
+def getnextadjustment(key):
+    yield 0
+
+def set_leaf_pair_adder(rank, model);
+    with open('layout-up', newline='') as csvfile1:
+        btreedata1 = list(csv.reader(csvfile1))
+    edge_dest=[currentrow[1] for currentrow in btreedata1]
+    if rank not in edgeset:
+        model.aux["isleaf"]=True
+        if rank % (dist.get_world_size()/2) == 0:           
+           model.aux["adder"]=True
+           model.aux["partner"] = rank + 2
+        else:
+           model.aux["adder"]=False   
+           model.aux["partner"] = rank - 2        
+    else:
+        model.aux["isleaf"]=False    
+            
+
 def my_average_gradients(model):
     """ Gradient averaging using Binomial Tree with SS """
 #    print("Using DFL")
@@ -146,12 +165,20 @@ def my_average_gradients(model):
         btreedata1 = list(csv.reader(csvfile1))
     with open('layout-down', newline='') as csvfile2:
         btreedata2 = list(csv.reader(csvfile2))
-
+        
     for param in model.parameters():
 #        if type(param) is torch.Tensor:
             model.mybuf=copy.deepcopy(param.grad.data)
 #            model.testbuf=torch.tensor(np.zeros(1))
-            #Tree Upward
+            additive = model.secret
+            if model.aux["isleaf"] == True:
+                nextadjustment = getnextadjustment(model.aux["key"])
+                if model.aux["adder"] == True:
+                    additive += nextadjustment
+                else:
+                    additive -= nextadjustment
+            param.grad.data += additive    
+#Tree Upward
 #           for i in range(int(math.log2(size))):
 #           for i in range(len(btreedata)):
             for currentrow in btreedata1:
@@ -247,7 +274,19 @@ def run(rank, size, epochs, K, averager, runid):
     LOG_FILE = "/logs/"+str(runid)
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     starttime = time.time()
+    
+    if averager == "DFLMSS":
+        set_leaf_pair_adder(rank, model)
+        with open('secrets', newline='') as csvfile3:
+            thesecrets = list(csv.reader(csvfile3))
+            model.secret=float(thesecrets[rank][0])
+        if model.aux["isleaf"] == True:
+            with open('keys', newline='') as csvfile4:
+                allkeys = list(csv.reader(csvfile4))
+                model.aux["key"]=allkeys[rank//(size/2)][0]
+            
 
+    
     for epoch in range(epochs):
         epoch_loss = 0.0
         skip=0
