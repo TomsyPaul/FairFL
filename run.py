@@ -140,10 +140,13 @@ nextadjustment=None
 def getnextadjustment(key):
     newstring=key
     while True:
-        newstring=sha256(newstring.encode('utf-8')).hexdigest()
-        for i in range(60):
-           yield newstring[i:i+4]
-        newstring=newstring[60:64]
+        newstring=str(int(sha256(newstring.encode('utf-8')).hexdigest(),16))
+        strlength=len(newstring)
+        for i in range(strlength-4):
+#           yield newstring[i:i+4]
+#            yield '0.'+newstring[i:i+4]
+            yield '0.00'+newstring[i:i+4]
+        newstring=newstring[strlength-4:strlength]
           
 
     
@@ -182,9 +185,9 @@ def my_average_gradients(model):
             additive = model.secret
             if model.aux["isleaf"] == True:
                 if model.aux["adder"] == True:
-                    additive += next(nextadjustment)
+                    additive += float(next(nextadjustment))
                 else:
-                    additive -= next(nextadjustment)
+                    additive -= float(next(nextadjustment))
             param.grad.data += additive    
 #Tree Upward
 #           for i in range(int(math.log2(size))):
