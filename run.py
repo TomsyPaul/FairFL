@@ -138,9 +138,15 @@ def basic_average_gradients(model):
 nextadjustment=None
 
 def getnextadjustment(key):
+    newstring=key
     while True:
-       yield 0
+        newstring=sha256(newstring.encode('utf-8')).hexdigest()
+        for i in range(60):
+           yield newstring[i:i+4]
+        newstring=newstring[60:64]
+          
 
+    
 def set_leaf_pair_adder(rank, size, model):
     with open('layout-up', newline='') as csvfile1:
         btreedata1 = list(csv.reader(csvfile1))
