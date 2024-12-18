@@ -145,7 +145,7 @@ def getnextadjustment(key):
         for i in range(strlength-4):
 #           yield newstring[i:i+4]
 #            yield '0.'+newstring[i:i+4]
-            yield '0.00'+newstring[i:i+4]
+            yield newstring[i:i+4]
         newstring=newstring[strlength-4:strlength]
           
 
@@ -154,9 +154,9 @@ def set_leaf_pair_adder(rank, size, model):
     with open('layout-up', newline='') as csvfile1:
         btreedata1 = list(csv.reader(csvfile1))
     edge_dest=[currentrow[1] for currentrow in btreedata1]
-    if rank not in edge_dest:
+    if str(rank) not in edge_dest:
         model.aux["isleaf"]=True
-        if rank % int(size/2) == 0:           
+        if rank % 4 == 0:           
            model.aux["adder"]=True
            model.aux["partner"] = rank + 2
         else:
@@ -296,7 +296,7 @@ def run(rank, size, epochs, K, averager, runid):
         if model.aux["isleaf"] == True:
             with open('keys', newline='') as csvfile4:
                 allkeys = list(csv.reader(csvfile4))
-                model.aux["key"]=allkeys[rank//int(size/2)][0]
+                model.aux["key"]=allkeys[rank//4][0]
             nextadjustment = getnextadjustment(model.aux["key"])
             
 
