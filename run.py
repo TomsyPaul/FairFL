@@ -135,6 +135,8 @@ def basic_average_gradients(model):
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
+nextadjustment=None
+
 def getnextadjustment(key):
     while True:
        yield 0
@@ -145,7 +147,7 @@ def set_leaf_pair_adder(rank, size, model):
     edge_dest=[currentrow[1] for currentrow in btreedata1]
     if rank not in edge_dest:
         model.aux["isleaf"]=True
-        if rank % (size/2) == 0:           
+        if rank % int(size/2) == 0:           
            model.aux["adder"]=True
            model.aux["partner"] = rank + 2
         else:
@@ -164,6 +166,8 @@ def my_average_gradients(model):
         btreedata1 = list(csv.reader(csvfile1))
     with open('layout-down', newline='') as csvfile2:
         btreedata2 = list(csv.reader(csvfile2))
+    
+    global nextadjustment
         
     for param in model.parameters():
 #        if type(param) is torch.Tensor:
@@ -174,7 +178,7 @@ def my_average_gradients(model):
                 if model.aux["adder"] == True:
                     additive += next(nextadjustment)
                 else:
-                    additive -= nextadjustment
+                    additive -= next(nextadjustment)
             param.grad.data += additive    
 #Tree Upward
 #           for i in range(int(math.log2(size))):
@@ -273,6 +277,8 @@ def run(rank, size, epochs, K, averager, runid):
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     starttime = time.time()
     
+    global nextadjustment
+    
     if averager == "DFLMSS":
         set_leaf_pair_adder(rank, size, model)
         with open('secrets', newline='') as csvfile3:
@@ -281,7 +287,7 @@ def run(rank, size, epochs, K, averager, runid):
         if model.aux["isleaf"] == True:
             with open('keys', newline='') as csvfile4:
                 allkeys = list(csv.reader(csvfile4))
-                model.aux["key"]=allkeys[rank//(size/2)][0]
+                model.aux["key"]=allkeys[rank//int(size/2)][0]
             nextadjustment = getnextadjustment(model.aux["key"])
             
 
