@@ -145,7 +145,7 @@ def getnextadjustment(key):
         for i in range(strlength-4):
 #           yield newstring[i:i+4]
 #            yield '0.'+newstring[i:i+4]
-            yield newstring[i:i+4]
+            yield '0.'+newstring[i:i+4]
         newstring=newstring[strlength-4:strlength]
           
 
@@ -282,7 +282,7 @@ def run(rank, size, epochs, K, averager, runid):
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
 
-    LOG_FILE = "/logs/"+str(runid)
+    LOG_FILE = "/logs/"+averager+"-"+str(epochs)+"-"+str(runid)
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     starttime = time.time()
     
