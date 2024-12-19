@@ -263,7 +263,7 @@ def their_average_gradients(model):
                            rowindex += 1
                          else:
                            rowindex += 1       
-            dist.barrier()
+#            dist.barrier()
             dist.all_reduce(model.mybuf, op=dist.reduce_op.SUM)
             param.grad.data = model.mybuf
             param.grad.data /= size
