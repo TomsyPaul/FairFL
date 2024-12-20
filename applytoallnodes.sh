@@ -1,2 +1,10 @@
 #! /bin/bash
-for i in `cat hostipsall | tail -n+4`; do ssh tomsy@$i mkdir mydfl; done
+#if [ ! -z $1 ] 
+#then
+#command=$1
+#else 
+#command=""
+#fi
+for i in `cat hostips`
+do scp -r /home/tomsy/mydfl tomsy@$i: 
+done

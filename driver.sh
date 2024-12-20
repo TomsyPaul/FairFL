@@ -24,7 +24,7 @@ then
    read
    bash setup.sh $5
    bash applytoall.sh 'docker start' c
-fi
+else
 echo $averager-$epochs-$runid>>logslist
 bash runscript.sh $coding $epochs $averager $K $runid
 read
@@ -44,3 +44,4 @@ grep "epoch,$i" results/$averager-$epochs-$runid | cut -d"," -f5 | awk '{ sum +=
 done
 echo "" >> "results/summary"
 bash close-all-terminals.sh
+fi
