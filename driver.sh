@@ -68,7 +68,7 @@ else
 echo $worldsize-$averager-$epochs-$runid>>logslist
 bash runscript.sh $coding $epochs $averager $K $runid
 read
-echo "$2,$3,$K,$runid" > "results/$worldsize-$averager-$epochs-$runid"
+echo "$worldsize,$2,$3,$K,$runid" > "results/$worldsize-$averager-$epochs-$runid"
 echo -e "******************\n" >> "results/$worldsize-$averager-$epochs-$runid"
 bash applytoallcontainers.sh "cat /logs/$worldsize-$averager-$epochs-$runid;echo" >> "results/$worldsize-$averager-$epochs-$runid"
 echo -e "Result..\n"
