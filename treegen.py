@@ -1,6 +1,6 @@
-import networkx as nx 
-import matplotlib.pyplot as plt
-
+#import networkx as nx 
+#import matplotlib.pyplot as plt
+import argparse
 
 def largest_power_le(n):
     k=0
@@ -56,10 +56,26 @@ def generate_tree(n,i):
 
           
 if __name__ == "__main__":
-     n=input("Enter n")
+#     n=input("Enter n")
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--n", type=int)
+     args = parser.parse_args()
+     n = int(args.n)
+     
      r,t=generate_tree(int(n),0)
-     print(r,t)
-#     for edge in t:
-#        print(edge[0],">",edge[1])
-        
+#     print(r,t)
+     l=[]
+     f1 = open("layout-up", "w")
+     f2 = open("layout-down", "w")
+ 
+     for edge in t:
+        print(edge[0],",",edge[1])
+        f1.write(str(edge[0])+","+str(edge[1])+"\n")
+        l=[edge]+l
+     for edge in l:
+        print(edge[1],",",edge[0])
+        f2.write(str(edge[1])+","+str(edge[0])+"\n")
+     f1.close()
+     f2.close()
+
 

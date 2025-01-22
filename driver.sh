@@ -1,6 +1,44 @@
 #! /bin/bash
 #cd ~/mydfl
 #git pull https://tomsypaul@github.com/TomsyPaul/mydfl.git 
+read -p"Enter Worldsize" worldsize
+
+#set hostips
+head -n $worldsize hostipsall > hostips
+
+#generate layouts
+python3 treegen.py --n=$worldsize
+
+#generate secrets
+>secrets
+secretsum=0
+for((i=1;i<$worldsize;i++))
+do
+ thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
+ echo "$thisrandom" >> secrets
+ secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
+done
+echo "-$secretsum" >> secrets
+
+
+#generate keys
+>keys
+for((i=0;i<$worldsize;i++))
+do
+if ! ((i % 4))
+then 
+echo "$RANDOM" >> keys
+fi
+done
+
+#set files to upload
+>files-to-upload
+echo layout-up >> files-to-upload
+echo layout-down >> files-to-upload
+echo secrets >> files-to-upload
+echo keys >> files-to-upload
+
+#rest of the process
 mkdir -p results
 coding=$1
 epochs=$2
