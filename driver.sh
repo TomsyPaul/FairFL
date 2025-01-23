@@ -14,9 +14,9 @@ python3 treegen.py --n=$worldsize
 secretsum=0
 for((i=1;i<$worldsize;i++))
 do
- thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
- echo "$thisrandom" >> secrets
- secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
+thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
+echo "$thisrandom" >> secrets
+secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
 done
 echo "-$secretsum" >> secrets
 
