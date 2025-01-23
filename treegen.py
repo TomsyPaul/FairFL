@@ -9,25 +9,25 @@ def largest_power_le(n):
     return pow(2,k-1)
      
 def generate_tree(n,i):
-  if(n<=3 and i==0):
-    print("Error, n<3")
+  if(n<=3):
+    print("Error, n<=3")
     return (0,[])
   else:
-    if(n==4):
-      return (i+3,[(i,i+1),(i+1,i+3),(i+2,i+3)])
 #    elif(n==5):
 #      return [(i,i+1),(i+1,i+3),(i+2,i+4),(i+4,i+3)]  
 #    elif(n==6):
 #      return [(i,i+1),(i+1,i+3),(i+2,i+4),(i+4,i+5),(i+5,i+3)]  
 #    elif(n==7):
 #      return [(i,i+1),(i+1,i+4),(i+4,i+6),(i+2,i+3),(i+3,i+5),(i+5,i+6)]  
+    k=largest_power_le(n)
+    if(k==n):
+         if(n==4):
+           return (i+3,[(i,i+1),(i+1,i+3),(i+2,i+3)])
+         else:
+           r1,l1=generate_tree(n//2,i)
+           r2,l2=generate_tree(n//2,i+n//2)
+           return (n+i-1,l1+l2+[(n//2+i-1,i+n-1)])
     else:
-      k=largest_power_le(n)
-      if(k==n):
-        r1,l1=generate_tree(n//2,i)
-        r2,l2=generate_tree(n//2,i+n//2)
-        return (n+i-1,l1+l2+[(n//2+i-1,i+n-1)])
-      else:
         if(n-k<4):
            r,l=generate_tree(k,i)
            if(n-k == 1):
@@ -42,12 +42,19 @@ def generate_tree(n,i):
            else:
              l.remove((k+i-3,k+i-1))
              l.remove((k+i-2,k+i-1))
-             l+=[(k+i-3,k+i)]
-             l+=[(k+i,k+i-1)]
-             
-             l+=[(k+i-2,k+i+1)]
-             l+=[(k+i+1,k+i+2)]
+#             l+=[(k+i-3,k+i)]
+#             l+=[(k+i,k+i-1)]
+             l+=[(k+i-3,k+i+2)]
              l+=[(k+i+2,k+i-1)]
+
+
+             l+=[(k+i-2,k+i)]
+             l+=[(k+i,k+i+1)]
+             l+=[(k+i+1,k+i-1)]
+             
+#             l+=[(k+i-2,k+i+1)]
+#             l+=[(k+i+1,k+i+2)]
+#             l+=[(k+i+2,k+i-1)]
            return (r,l)
         else:
            r1,l1=generate_tree(k,i)   
@@ -65,17 +72,17 @@ if __name__ == "__main__":
      r,t=generate_tree(int(n),0)
 #     print(r,t)
      l=[]
-     f1 = open("layout-up", "w")
-     f2 = open("layout-down", "w")
- 
+#     f1 = open("layout-up", "w")
+#     f2 = open("layout-down", "w")
+     print("n=",n)
      for edge in t:
-        print(edge[0],",",edge[1])
-        f1.write(str(edge[0])+","+str(edge[1])+"\n")
-        l=[edge]+l
-     for edge in l:
-        print(edge[1],",",edge[0])
-        f2.write(str(edge[1])+","+str(edge[0])+"\n")
-     f1.close()
-     f2.close()
-
+        print(edge[0],",",edge[1],sep="",end=" ")
+#        f1.write(str(edge[0])+","+str(edge[1])+"\n")
+#        l=[edge]+l
+#     for edge in l:
+#        print(edge[1],",",edge[0])
+#        f2.write(str(edge[1])+","+str(edge[0])+"\n")
+#     f1.close()
+#     f2.close()
+     print("")
 
