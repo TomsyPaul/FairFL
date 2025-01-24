@@ -13,12 +13,6 @@ def generate_tree(n,i):
     print("Error, n<=3")
     return (0,[])
   else:
-#    elif(n==5):
-#      return [(i,i+1),(i+1,i+3),(i+2,i+4),(i+4,i+3)]  
-#    elif(n==6):
-#      return [(i,i+1),(i+1,i+3),(i+2,i+4),(i+4,i+5),(i+5,i+3)]  
-#    elif(n==7):
-#      return [(i,i+1),(i+1,i+4),(i+4,i+6),(i+2,i+3),(i+3,i+5),(i+5,i+6)]  
     k=largest_power_le(n)
     if(k==n):
          if(n==4):
@@ -72,17 +66,17 @@ if __name__ == "__main__":
      r,t=generate_tree(int(n),0)
 #     print(r,t)
      l=[]
-#     f1 = open("layout-up", "w")
-#     f2 = open("layout-down", "w")
-     print("n=",n)
+     f1 = open("layout-up", "w")
+     f2 = open("layout-down", "w")
+#     print("n=",n)
      for edge in t:
-        print(edge[0],",",edge[1],sep="",end=" ")
-#        f1.write(str(edge[0])+","+str(edge[1])+"\n")
-#        l=[edge]+l
-#     for edge in l:
+#        print(edge[0],",",edge[1],sep="",end=" ")
+        f1.write(str(edge[0])+","+str(edge[1])+"\n")
+        l=[edge]+l
+     for edge in l:
 #        print(edge[1],",",edge[0])
-#        f2.write(str(edge[1])+","+str(edge[0])+"\n")
-#     f1.close()
-#     f2.close()
-     print("")
+        f2.write(str(edge[1])+","+str(edge[0])+"\n")
+     f1.close()
+     f2.close()
+#     print("")
 

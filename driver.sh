@@ -23,12 +23,10 @@ echo "-$secretsum" >> secrets
 
 #generate keys
 >keys
-for((i=0;i<$worldsize;i++))
+keycount=`echo "$worldsize/4" |bc`
+for((i=0;i<$keycount;i++))
 do
-if ! ((i % 4))
-then 
 echo "$RANDOM" >> keys
-fi
 done
 
 #set files to upload
