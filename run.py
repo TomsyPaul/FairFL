@@ -188,7 +188,7 @@ def my_average_gradients(model):
                     additive += float(next(nextadjustment))
                 else:
                     additive -= float(next(nextadjustment))
-            param.grad.data += additive    
+            param.grad.data += additive
 #Tree Upward
 #           for i in range(int(math.log2(size))):
 #           for i in range(len(btreedata)):
