@@ -1,7 +1,7 @@
 #! /bin/bash
 #cd ~/mydfl
 #git pull https://tomsypaul@github.com/TomsyPaul/mydfl.git 
-read -p"Enter Worldsize" worldsize
+read -p "Enter Worldsize " worldsize
 
 #set hostips
 head -n $worldsize hostipsall > hostips
@@ -9,7 +9,7 @@ head -n $worldsize hostipsall > hostips
 #generate layouts
 python3 treegen.py --n=$worldsize
 
-#generate secrets
+#generate secrets (n-1)
 >secrets
 secretsum=0
 for((i=1;i<$worldsize;i++))
@@ -18,6 +18,7 @@ thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
 echo "$thisrandom" >> secrets
 secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
 done
+#generate secrets (n-th)
 echo "-$secretsum" >> secrets
 
 
