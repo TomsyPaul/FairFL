@@ -1,4 +1,4 @@
-"""run.py:"""
+"""run.py: adapted from https://pytorch.org/tutorials/intermediate/dist_tuto.html"""
 #!/usr/bin/env python
 import os
 import torch
@@ -92,7 +92,9 @@ def partition_dataset():
         ]))
     size = dist.get_world_size()
     bsz = 128 // size
-    partition_sizes = [1.0 / size for _ in range(size)]
+#    partition_sizes = [1.0 / size for _ in range(size)]
+    with open('partition_sizes', newline='') as csvfile1:
+        partition_sizes = list(csv.reader(csvfile1))
     partition = DataPartitioner(dataset, partition_sizes)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(
