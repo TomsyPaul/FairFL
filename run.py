@@ -68,7 +68,7 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50, 10)
         self.mybuf=[]
         self.splitbuf=[]
-        self.secret=float(0)
+#        self.secret=float(0)
         self.aux=dict(isleaf=False,partner=0,adder=False,key="1234567890")
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -182,7 +182,8 @@ def my_average_gradients(model):
 #        if type(param) is torch.Tensor:
             model.mybuf=copy.deepcopy(param.grad.data)
 #            model.testbuf=torch.tensor(np.zeros(1))
-            additive = model.secret
+#            additive = model.secret
+            additive = 0.0
             if model.aux["isleaf"] == True:
                 if model.aux["adder"] == True:
                     additive += float(next(nextadjustment))
@@ -290,9 +291,9 @@ def run(rank, size, epochs, K, averager, runid):
     
     if averager == "DFLMSS":
         set_leaf_pair_adder(rank, size, model)
-        with open('secrets', newline='') as csvfile3:
-            thesecrets = list(csv.reader(csvfile3))
-            model.secret=float(thesecrets[rank][0])
+#        with open('secrets', newline='') as csvfile3:
+#            thesecrets = list(csv.reader(csvfile3))
+#            model.secret=float(thesecrets[rank][0])
         if model.aux["isleaf"] == True:
             with open('keys', newline='') as csvfile4:
                 allkeys = list(csv.reader(csvfile4))

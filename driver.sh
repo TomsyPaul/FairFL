@@ -9,17 +9,17 @@ head -n $worldsize hostipsall > hostips
 #generate layouts
 python3 treegen.py --n=$worldsize
 
-#generate secrets (n-1)
->secrets
-secretsum=0
-for((i=1;i<$worldsize;i++))
-do
-thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
-echo "$thisrandom" >> secrets
-secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
-done
-#generate secrets (n-th)
-echo "-$secretsum" >> secrets
+##generate secrets (n-1)
+#>secrets
+#secretsum=0
+#for((i=1;i<$worldsize;i++))
+#do
+#thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
+#echo "$thisrandom" >> secrets
+#secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
+#done
+##generate secrets (n-th)
+#echo "-$secretsum" >> secrets
 
 
 #generate keys
@@ -34,7 +34,7 @@ done
 >files-to-upload
 echo layout-up >> files-to-upload
 echo layout-down >> files-to-upload
-echo secrets >> files-to-upload
+#echo secrets >> files-to-upload
 echo keys >> files-to-upload
 echo run.py >> files-to-upload
 
