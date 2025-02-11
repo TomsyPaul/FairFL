@@ -27,12 +27,9 @@ python3 treegen.py --n=$worldsize
 for((i=0;i<$world_size-4;i++))
 do
 common=`echo 0.9/\($world_size-4\) | bc -l`
-echo "$common, ">>partition_sizes 
+echo -n "$common, ">>partition_sizes 
 done
-echo ".04">>partition_sizes 
-echo ".04">>partition_sizes 
-echo ".01">>partition_sizes 
-echo ".01">>partition_sizes 
+echo -n ".04, .04, .01, .01">>partition_sizes 
 
 #generate keys
 >keys
