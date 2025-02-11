@@ -22,6 +22,20 @@ python3 treegen.py --n=$worldsize
 #echo "-$secretsum" >> secrets
 
 
+#generate partition_sizes
+>partition_sizes
+for((i=0;i<$world_size-4;i++))
+do
+common=`echo 0.9/\($world_size-4\) | bc -l`
+echo "$common, ">>partition_sizes 
+done
+echo ".04">>partition_sizes 
+echo ".04">>partition_sizes 
+echo ".01">>partition_sizes 
+echo ".01">>partition_sizes 
+
+
+
 #generate keys
 >keys
 keycount=`echo "$worldsize/4" |bc`
