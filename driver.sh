@@ -22,6 +22,14 @@ python3 treegen.py --n=$worldsize
 #echo "-$secretsum" >> secrets
 
 
+#generate partition_sizes
+>partition_sizes
+for((i=0;i<$world_size;i++))
+do
+common=`echo 1.0/$world_size | bc -l`
+echo "$common, ">>partition_sizes 
+done
+
 #generate keys
 >keys
 keycount=`echo "$worldsize/4" |bc`
@@ -37,7 +45,6 @@ echo layout-down >> files-to-upload
 #echo secrets >> files-to-upload
 echo keys >> files-to-upload
 echo run.py >> files-to-upload
-echo partition_sizes >> files-to-upload
 
 
 #rest of the process
