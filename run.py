@@ -95,6 +95,7 @@ def partition_dataset():
 #    partition_sizes = [1.0 / size for _ in range(size)]
     with open('partition_sizes', newline='') as csvfile1:
         partition_sizes = list(csv.reader(csvfile1))
+    partition_sizes=[float(partition_sizes[0][i]) for i in range(size)]    
     partition = DataPartitioner(dataset, partition_sizes)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(

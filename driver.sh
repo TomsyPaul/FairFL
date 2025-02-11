@@ -27,7 +27,7 @@ python3 treegen.py --n=$worldsize
 for((i=0;i<$world_size;i++))
 do
 common=`echo 1.0/$world_size | bc -l`
-echo "$common, ">>partition_sizes 
+echo -n "$common, ">>partition_sizes 
 done
 
 #generate keys
@@ -45,7 +45,7 @@ echo layout-down >> files-to-upload
 #echo secrets >> files-to-upload
 echo keys >> files-to-upload
 echo run.py >> files-to-upload
-
+echo partition_sizes >> files-to-upload
 
 #rest of the process
 mkdir -p results
