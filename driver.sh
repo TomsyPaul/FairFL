@@ -34,8 +34,6 @@ echo ".04">>partition_sizes
 echo ".01">>partition_sizes 
 echo ".01">>partition_sizes 
 
-
-
 #generate keys
 >keys
 keycount=`echo "$worldsize/4" |bc`
@@ -51,7 +49,7 @@ echo layout-down >> files-to-upload
 #echo secrets >> files-to-upload
 echo keys >> files-to-upload
 echo run.py >> files-to-upload
-
+echo partition_sizes >> files-to-upload
 
 #rest of the process
 mkdir -p results
