@@ -20,6 +20,7 @@ from math import ceil
 from random import Random
 from torch.autograd import Variable
 from torchvision import datasets, transforms
+import torchvision.models as models
 
 class Partition(object):
     """ Dataset-like object, but only access a subset of it. """
@@ -280,7 +281,7 @@ def run(rank, size, epochs, K, averager, runid):
     torch.manual_seed(1234)
     train_set, bsz = partition_dataset()
     model = Net()
-    model = model
+#    model = model
 #    model = model.cuda(rank)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
@@ -331,8 +332,11 @@ def run(rank, size, epochs, K, averager, runid):
         logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
     endtime = time.time()
     print(endtime - starttime)
-    logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")    
-
+    logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")
+    torch.save(model.state_dict(), runid+"round-0")   
+    latesttime = time.time()
+    logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
+    
 
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, backend='gloo'):

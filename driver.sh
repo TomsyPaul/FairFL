@@ -24,13 +24,17 @@ python3 treegen.py --n=$worldsize
 
 #generate partition_sizes
 >partition_sizes
-for((i=0;i<$world_size-4;i++))
+if [ $worldsize == '4' ]
+then 
+echo -n ".4, .4, .1, .1">>partition_sizes 
+else
+for((i=0;i<$worldsize-4;i++))
 do
-common=`echo 0.9/\($world_size-4\) | bc -l`
+common=`echo 0.9/\($worldsize-4\) | bc -l`
 echo -n "$common, ">>partition_sizes 
 done
 echo -n ".04, .04, .01, .01">>partition_sizes 
-
+fi
 #generate keys
 >keys
 keycount=`echo "$worldsize/4" |bc`
