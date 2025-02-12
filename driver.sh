@@ -24,9 +24,9 @@ python3 treegen.py --n=$worldsize
 
 #generate partition_sizes
 >partition_sizes
-if [ $worldsize == '4' ]
+if [ $worldsize == '8' ]
 then 
-echo -n ".1, .1, .1, .1">>partition_sizes 
+echo -n ".125, .125, .125, .125, .125, .125, .125, .125">>partition_sizes 
 else
 for((i=0;i<$worldsize-4;i++))
 do
