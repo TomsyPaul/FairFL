@@ -19,9 +19,11 @@ do
       ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/$filename c$i:/workspace/$filename
    done < files-to-upload      
    fi   
+ ((i++))     	  
  fi
 done < hostips
 
+i=0
 while  read ip
 do
  if [ ! -z $ip ]
