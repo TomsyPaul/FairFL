@@ -26,7 +26,7 @@ python3 treegen.py --n=$worldsize
 >partition_sizes
 if [ $worldsize == '4' ]
 then 
-echo -n ".4, .4, .1, .1">>partition_sizes 
+echo -n ".1, .1, .1, .1">>partition_sizes 
 else
 for((i=0;i<$worldsize-4;i++))
 do
@@ -86,7 +86,7 @@ bash applytoallcontainers.sh "cat /logs/$worldsize-$averager-$epochs-$runid;echo
 echo -e "Result..\n"
 cat results/$worldsize-$averager-$epochs-$runid
 echo "$worldsize,$2,$3,$K,$runid" >> "results/summary"
-grep TIME results/$worldsize-$averager-$epochs-$runid | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
+grep -w TIME results/$worldsize-$averager-$epochs-$runid | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
 
 echo -e "Average Loss\n" >> "results/summary"
 
