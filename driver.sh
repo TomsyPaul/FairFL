@@ -6,9 +6,6 @@ read -p "Enter Worldsize " worldsize
 #set hostips
 head -n $worldsize hostipsall > hostips
 
-#generate layouts
-python3 treegen.py --n=$worldsize
-
 ##generate secrets (n-1)
 #>secrets
 #secretsum=0
@@ -23,34 +20,13 @@ python3 treegen.py --n=$worldsize
 
 
 #generate partition_sizes
->partition_sizes
-if [ $worldsize == '8' ]
-then 
-echo -n ".125, .125, .125, .125, .125, .125, .125, .125">>partition_sizes 
-else
-for((i=0;i<$worldsize-4;i++))
-do
-common=`echo 0.9/\($worldsize-4\) | bc -l`
-echo -n "$common, ">>partition_sizes 
-done
-echo -n ".04, .04, .01, .01">>partition_sizes 
-fi
-#generate keys
->keys
-keycount=`echo "$worldsize/4" |bc`
-for((i=0;i<$keycount;i++))
-do
-echo "$RANDOM" >> keys
-done
+#>partition_sizes
+#for((i=0;i<$worldsize;i++))
+#do
+#common=`echo 1.0/$worldsize | bc -l`
+#echo -n "$common, ">>partition_sizes 
+#done
 
-#set files to upload
->files-to-upload
-echo layout-up >> files-to-upload
-echo layout-down >> files-to-upload
-#echo secrets >> files-to-upload
-echo keys >> files-to-upload
-echo run.py >> files-to-upload
-echo partition_sizes >> files-to-upload
 
 #rest of the process
 mkdir -p results
@@ -86,7 +62,7 @@ bash applytoallcontainers.sh "cat /logs/$worldsize-$averager-$epochs-$runid;echo
 echo -e "Result..\n"
 cat results/$worldsize-$averager-$epochs-$runid
 echo "$worldsize,$2,$3,$K,$runid" >> "results/summary"
-grep -w TIME results/$worldsize-$averager-$epochs-$runid | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
+grep TIME results/$worldsize-$averager-$epochs-$runid | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
 
 echo -e "Average Loss\n" >> "results/summary"
 

@@ -181,6 +181,7 @@ def my_average_gradients(model):
         btreedata2 = list(csv.reader(csvfile2))
     
     global nextadjustment
+    global cumulativeoverhead
         
     for param in model.parameters():
 #        if type(param) is torch.Tensor:
@@ -188,12 +189,16 @@ def my_average_gradients(model):
 #            model.testbuf=torch.tensor(np.zeros(1))
 #            additive = model.secret
             additive = 0.0
+            overhead_starttime=time.time()
             if model.aux["isleaf"] == True:
                 if model.aux["adder"] == True:
                     additive += float(next(nextadjustment))
                 else:
                     additive -= float(next(nextadjustment))
             param.grad.data += additive
+            overhead_endtime=time.time()
+            cumulativeoverhead += (overhead_endtime - overhead_starttime)
+
 #Tree Upward
 #           for i in range(int(math.log2(size))):
 #           for i in range(len(btreedata)):
@@ -273,6 +278,8 @@ def their_average_gradients(model):
             param.grad.data = model.mybuf
             param.grad.data /= size
 
+
+cumulativeoverhead=0.0
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
@@ -292,7 +299,7 @@ def run(rank, size, epochs, K, averager, runid):
     starttime = time.time()
     
     global nextadjustment
-    
+    global cumulativeoverhead
     if averager == "DFLMSS":
         set_leaf_pair_adder(rank, size, model)
 #        with open('secrets', newline='') as csvfile3:
@@ -336,7 +343,7 @@ def run(rank, size, epochs, K, averager, runid):
     torch.save(model.state_dict(), runid+"round-0")   
     latesttime = time.time()
     logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
-    
+    logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
 
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, backend='gloo'):
