@@ -283,13 +283,17 @@ cumulativeoverhead=0.0
 #def run(rank, size):
 #   """ Distributed function to be implemented later. """
 #   print("Rank = ", rank)
-def run(rank, size, epochs, K, averager, runid):
+def run(rank, size, epochs, K, averager, runid, roundid):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, bsz = partition_dataset()
     model = Net()
 #    model = model
 #    model = model.cuda(rank)
+
+    if roundid != 0:
+       model.load_state_dict(torch.load(runid+"round-"+roundid-1, weights_only=True))
+
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
@@ -340,16 +344,16 @@ def run(rank, size, epochs, K, averager, runid):
     endtime = time.time()
     print(endtime - starttime)
     logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")
-    torch.save(model.state_dict(), runid+"round-0")   
+    torch.save(model.state_dict(), runid+"round-"+roundid)   
     latesttime = time.time()
     logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
     logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
 
 
-def init_processes(rank, size, epochs, K, averager, runid, fn, backend='gloo'):
+def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """
    dist.init_process_group(backend, rank=rank, world_size=size)
-   fn(rank, size, epochs, K, averager, runid)
+   fn(rank, size, epochs, K, averager, runid, roundid)
 
 if __name__ == "__main__":
 #    rank=int(os.environ['LOCAL_RANK'])
@@ -365,6 +369,7 @@ if __name__ == "__main__":
     parser.add_argument("--averager", type=str)
     parser.add_argument("--K", type=int)
     parser.add_argument("--runid", type=str)
+    parser.add_argument("--roundid", type=int)
     args = parser.parse_args()
     rank = int(args.rank)
     size = int(args.size)
@@ -372,4 +377,5 @@ if __name__ == "__main__":
     averager = args.averager
     K = int(args.K)
     runid = args.runid
-    init_processes(rank, size, epochs, K, averager, runid, run)
+    roundid = int(args.roundid)
+    init_processes(rank, size, epochs, K, averager, runid, run, roundid)
