@@ -4,6 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=int)
+args = parser.parse_args()
 size = int(args.size)
 
 with open('partition_sizes_original', newline='') as csvfile1:

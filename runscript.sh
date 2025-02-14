@@ -79,7 +79,5 @@ done < hostips
 
 done
 
-cp partition_sizes_original partition_sizes 
-rm tempfile*
-
+cp partition_sizes_original partition_sizes
 
