@@ -33,37 +33,15 @@ do
 done < hostips
 
 cp partition_sizes partition_sizes_original
-
-currentworldsize=$worldsize
+python3 generate_partitions.py
 
 rounds=`cat partition_sizes |tr -d " " |  tr "," "\n" | head -n $worldsize | sort -n | uniq|wc -l`
+epochs=`echo $epochs/$rounds | bc`
 
-unique_array=()
-for((i=0;i<rounds;i++))
-do 
-unique_array+=(`cat partition_sizes |tr -d " " |  tr "," "\n" | head -n $worldsize | sort -n | uniq | head -n $((i+1)) | tail -n 1`)
-done
-
-
-for((i=0;i<$rounds;i++))
+for((x=0;x<rounds;x++))
 do
 
-cp partition_sizes partition_sizes_temp
-
-partition_temp_array=(`cat partition_sizes_temp|tr -d ","`)
-partition_sizes_array=()
-for t in ${!partition_temp_array[@]}
-do 
-partition_sizes_array+=(`echo ${partition_temp_array[$t]}-${unique_array[0]} | bc -l`)
-done
-
-
-
-newsize=0
-for((i=0;i<currentworldsize;i++))
-do
-
-done
+cp tempfile$x partition_sizes
 
 >files-to-upload
 echo layout-up >> files-to-upload
@@ -72,6 +50,8 @@ echo layout-down >> files-to-upload
 echo keys >> files-to-upload
 #echo run.py >> files-to-upload
 echo partition_sizes >> files-to-upload
+
+currentworldsize=`grep -o "," tempfile$x | wc -l`
 
 #generate layouts
 python3 treegen.py --n=$currentworldsize
@@ -89,7 +69,7 @@ while  read ip
 do
  if [ ! -z $ip ]
  then
-   gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python run.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid; echo Output of $i; exec bash"   
+   gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python run.py --rank=$i --size=$currentworldsize --epochs=$epochs --averager=$averager --K=$K --runid=$runid; echo Output of $i; exec bash"   
  ((i++))     	
  fi
 done < hostips
@@ -99,7 +79,7 @@ done < hostips
 
 done
 
-
-
+cp partition_sizes_original partition_sizes 
+rm tempfile*
 
 
