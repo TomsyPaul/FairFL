@@ -1,6 +1,11 @@
 #! /bin/python3
 import csv
-size=16
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--size", type=int)
+size = int(args.size)
+
 with open('partition_sizes_original', newline='') as csvfile1:
    original_sizes=list(csv.reader(csvfile1))
 original_sizes=[float(original_sizes[0][i]) for i in range(size)]

@@ -33,7 +33,7 @@ do
 done < hostips
 
 cp partition_sizes partition_sizes_original
-python3 generate_partitions.py
+python3 generate_partitions.py --size=$size
 
 rounds=`cat partition_sizes |tr -d " " |  tr "," "\n" | head -n $worldsize | sort -n | uniq|wc -l`
 epochs=`echo $epochs/$rounds | bc`
