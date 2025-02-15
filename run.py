@@ -292,13 +292,13 @@ def run(rank, size, epochs, K, averager, runid, roundid):
 #    model = model.cuda(rank)
 
     if roundid != 0:
-       model.load_state_dict(torch.load(runid+"round-"+roundid-1, weights_only=True))
+       model.load_state_dict(torch.load(runid+"round-"+str(roundid-1), weights_only=True))
 
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
     num_batches = ceil(len(train_set.dataset) / float(bsz))
 
-    LOG_FILE = "/logs/"+str(size)+"-"+averager+"-"+str(epochs)+"-"+str(runid)
+    LOG_FILE = "/logs/"+str(size)+"-"+averager+"-"+str(epochs)+"-"+str(runid)+"-"+str(roundid)
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     starttime = time.time()
     
@@ -340,14 +340,14 @@ def run(rank, size, epochs, K, averager, runid, roundid):
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
             epoch_loss / num_batches)
-        logging.info(f"Rank,{rank},epoch,{epoch},{epoch_loss/num_batches:.4f}")
+        logging.info(f"Rank,{rank},round,{roundid},epoch,{epoch},{epoch_loss/num_batches:.4f}")
     endtime = time.time()
     print(endtime - starttime)
-    logging.info(f"Rank,{rank},TIME,{endtime-starttime:.4f}")
-    torch.save(model.state_dict(), runid+"round-"+roundid)   
+    logging.info(f"Rank,{rank},round,{roundid},TIME,{endtime-starttime:.4f}")
+    torch.save(model.state_dict(), runid+"round-"+str(roundid))   
     latesttime = time.time()
-    logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
-    logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
+#    logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
+#    logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
 
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
