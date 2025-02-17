@@ -7,12 +7,16 @@ averager=$3
 K=$4
 runid=$5
 
+>nc_output.txt
+nc -k -u -l 23432  >> nc_output.txt&
 
 #set files to upload
 >files-to-upload
 #echo keys >> files-to-upload
 echo run.py >> files-to-upload
 #echo partition_sizes >> files-to-upload
+
+cumulative_size=0
 
 
 i=0
@@ -54,6 +58,9 @@ do
    
    currentworldsize=`grep -o "," tempfile$x | wc -l`
    head -n $currentworldsize hostips_backup > hostips
+   
+   cumulative_size=$((cumulative_size+currentworldsize))
+   
    #generate layouts
    python3 treegen.py --n=$currentworldsize
    #generate keys
@@ -92,7 +99,19 @@ do
    done < hostips
 
    echo "Completed Round $x"
-   read
+   echo "Cumulative Size = $cumulative_size"
+   
+   #read
+   #for((i=0;i<$currentworldsize;i++))
+   #do
+   #nc -l 1234 
+   #done
+   while [[ `cat nc_output.txt | wc -l` < $cumulative_size ]]
+   do
+      sleep 1
+      echo "nc_output count = `cat nc_output.txt | wc -l`"
+   done
+   
    
    echo "$currentworldsize,$2,$3,$K,$runid,$x" > "results/$currentworldsize-$averager-$epochs-$runid-$x"
    echo -e "******************\n" >> "results/$currentworldsize-$averager-$epochs-$runid-$x"

@@ -22,6 +22,8 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 import torchvision.models as models
 
+import socket
+
 class Partition(object):
     """ Dataset-like object, but only access a subset of it. """
 
@@ -278,6 +280,13 @@ def their_average_gradients(model):
             param.grad.data = model.mybuf
             param.grad.data /= size
 
+#https://stackoverflow.com/questions/1908878/netcat-implementation-in-python
+def netcat(hostname, port, content):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect((hostname, port))
+    s.sendall(content)
+#    s.shutdown(socket.SHUT_WR)
+#    s.close()
 
 cumulativeoverhead=0.0
 #def run(rank, size):
@@ -348,7 +357,8 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     latesttime = time.time()
 #    logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
 #    logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
-
+    coordinator="172.16.64.126"
+    netcat(coordinator,23432,f"{rank}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """
