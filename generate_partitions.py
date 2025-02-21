@@ -4,17 +4,15 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=int)
+parser.add_argument("--rounds", type=int)
 args = parser.parse_args()
 size = int(args.size)
+rounds = int(args.rounds)
 
 with open('partition_sizes_original', newline='') as csvfile1:
    original_sizes=list(csv.reader(csvfile1))
 original_sizes=[float(original_sizes[0][i]) for i in range(size)]
 
-unique_sizes=list(set(original_sizes))
-unique_sizes.sort()
-
-rounds=len(unique_sizes)
 round_sizes=[unique_sizes[0] for _ in original_sizes]
 
 for i in range(rounds):
