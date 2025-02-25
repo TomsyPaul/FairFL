@@ -85,8 +85,8 @@ def run(rank, size, epochs, K, averager, runid, roundid):
                     additive += float(next(nextadjustment))
                 else:
                     additive -= float(next(nextadjustment))
-    sending_copy = [i+additive for i in local_counts]
-    global_counts = sending_copy.copy()
+    sending_copy = torch.Tensor([i+additive for i in local_counts])
+    receiving_copy = sending_copy.clone()
     
     with open('layout-up', newline='') as csvfile1:
         btreedata1 = list(csv.reader(csvfile1))
@@ -99,16 +99,16 @@ def run(rank, size, epochs, K, averager, runid, roundid):
                            dist.send(tensor=sending_copy,dst=int(currentrow[1]))
                            
                          elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=global_counts,src=int(currentrow[0]))
-                           sending_copy=[sending_copy[i]+global_counts[i] for i in range(len(sending_copy))]
+                           dist.recv(tensor=receiving_copy,src=int(currentrow[0]))
+                           sending_copy=torch.Tensor([sending_copy[i]+receiving_copy[i] for i in range(len(sending_copy))])
 
 #Tree Downward
     for currentrow in btreedata2:
                         if int(currentrow[0]) == rank:
                            dist.send(tensor=sending_copy,dst=int(currentrow[1]))
                         elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=global_counts,src=int(currentrow[0]))
-                           sending_copy=global_counts
+                           dist.recv(tensor=receiving_copy,src=int(currentrow[0]))
+                           sending_copy=receiving_copy
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
     global_counts=[int(sending_copy[i]) for i in range(len(sending_copy))]
     
