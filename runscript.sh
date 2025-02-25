@@ -67,7 +67,7 @@ do
     sleep 1
     echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
 done
-read
+#read
 #bash close-all-terminals.sh
 
 i=0
@@ -87,5 +87,8 @@ do
     sleep 1
     echo "nc_global_counts = `cat nc_global_counts.txt | wc -l`"
 done
+
+
+
 read
 bash close-all-terminals.sh

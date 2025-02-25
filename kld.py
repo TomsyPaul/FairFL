@@ -23,6 +23,7 @@ from torchvision import datasets, transforms
 import torchvision.models as models
 
 import socket
+from math import log2
 
 nextadjustment=None
 
@@ -52,7 +53,8 @@ def set_leaf_pair_adder(rank, size, aux):
     else:
         aux["isleaf"]=False    
             
-
+def kld(p,q):
+    return sum(p[i] * log2(p[i]/q[i]) for i in range(len(p)))
 
 
 
@@ -111,9 +113,12 @@ def run(rank, size, epochs, K, averager, runid, roundid):
                            sending_copy=receiving_copy
 #           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
     global_counts=[int(sending_copy[i]) for i in range(len(sending_copy))]
+    p=[float(global_counts[i])/sum(global_counts) for i in range(10)]
+    q=[float(local_counts[i])/sum(local_counts) for i in range(10)]
+    
     
     coordinator="172.16.64.126"
-    netcat(coordinator,23632,f"Rank={rank}, global_counts={global_counts}\n".encode("utf-8"))
+    netcat(coordinator,23632,f"Rank={rank}, global_counts={global_counts}, kld(p,q)={kld(p,q)}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """
