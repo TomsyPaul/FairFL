@@ -96,6 +96,7 @@ def partition_dataset():
     size = dist.get_world_size()
     bsz = 128 // size
 #    partition_sizes = [1.0 / size for _ in range(size)]
+    logging.info(f"Inside partition_dataset")
     with open('partition_sizes', newline='') as csvfile1:
         partition_sizes = list(csv.reader(csvfile1))
     partition_sizes=[float(partition_sizes[0][i]) for i in range(size)]    
@@ -295,10 +296,12 @@ cumulativeoverhead=0.0
 def run(rank, size, epochs, K, averager, runid, roundid):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
+    logging.info(f"Inside run before calling partition_dataset")
     train_set, bsz = partition_dataset()
     model = Net()
 #    model = model
 #    model = model.cuda(rank)
+    logging.info(f"Inside run after calling partition_dataset and model=Net()")
 
     if roundid != 0:
        model.load_state_dict(torch.load(runid+"round-"+str(roundid-1), weights_only=True))
@@ -367,9 +370,6 @@ def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend=
 
 if __name__ == "__main__":
 #    rank=int(os.environ['LOCAL_RANK'])
-    os.environ['GLOO_SOCKET_IFNAME']="eth0"
-    os.environ['MASTER_ADDR'] = 'n0'
-    os.environ['MASTER_PORT'] = '12321'    
 #    rank=1
 #    size=3
     parser = argparse.ArgumentParser()
@@ -380,6 +380,8 @@ if __name__ == "__main__":
     parser.add_argument("--K", type=int)
     parser.add_argument("--runid", type=str)
     parser.add_argument("--roundid", type=int)
+    parser.add_argument("--masteraddr", type=str)
+    parser.add_argument("--masterport", type=str)
     args = parser.parse_args()
     rank = int(args.rank)
     size = int(args.size)
@@ -388,4 +390,11 @@ if __name__ == "__main__":
     K = int(args.K)
     runid = args.runid
     roundid = int(args.roundid)
+    masteraddr = args.masteraddr
+    masterport = args.masterport
+    
+    os.environ['GLOO_SOCKET_IFNAME']="eth0"
+    os.environ['MASTER_ADDR'] = masteraddr
+    os.environ['MASTER_PORT'] = masterport    
+
     init_processes(rank, size, epochs, K, averager, runid, run, roundid)
