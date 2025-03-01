@@ -117,8 +117,6 @@ do
    echo run.py >> files-to-upload
    echo partition_sizes >> files-to-upload
    
-   tar -cvzf files-to-upload.gz -T files-to-upload
-   
    currentworldsize=`grep -o "," tempfile$x | wc -l`
    head -n $currentworldsize hostips_sorted > selected_from_sorted
    
@@ -133,6 +131,8 @@ do
    do
      echo "$RANDOM" >> keys
    done
+
+   tar -cvzf files-to-upload.gz -T files-to-upload
    
    i=0
    while  read ip
