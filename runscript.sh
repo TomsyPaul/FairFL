@@ -59,7 +59,7 @@ while  read ip
 do
      if [ ! -z $ip ]
      then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python find_local_count.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i; exec bash"   
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python find_local_count.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
         ((i++))     	
      fi
 done < hostips
@@ -77,7 +77,7 @@ while  read ip
 do
      if [ ! -z $ip ]
      then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i; exec bash"   
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
         ((i++))     	
      fi
 done < hostips
