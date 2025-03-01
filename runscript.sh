@@ -140,19 +140,15 @@ do
      if [ ! -z $ip ]
      then
         if [ $coding == 'Y' ]
-           then
-              while read filename
-              do
+        then
                     j=`grep -n -w $ip hostips | cut -d ":" -f1`
                     scp files-to-upload.gz tomsy@$ip:mydfl
                     ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/files-to-upload.gz c$((j-1)):/workspace/files-to-upload.gz
                     ssh -n tomsy@$ip docker exec c$((j-1)) tar -C /workspace/ -xz -f /workspace/files-to-upload.gz
-              done < files-to-upload      
        fi   
        ((i++))     	  
      fi
    done < selected_from_sorted
-#   done < hostips
    
    ipoffirst=`head -n 1 selected_from_sorted`
    jfirst=`grep -n -w $ipoffirst hostips | cut -d ":" -f1`
@@ -167,7 +163,6 @@ do
         ((i++))     	
     fi
    done < selected_from_sorted
-#   done < hostips
    
    echo "Completed Round $x"
    echo "Cumulative Size = $cumulative_size"
