@@ -119,11 +119,11 @@ do
    echo -e "Result..\n"
    cat results/$currentworldsize-$averager-$epochs-$runid-$x
    echo "$currentworldsize,$2,$3,$K,$runid,$x" >> "results/summary"
-   grep TIME results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f4 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
+   grep TIME results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f6 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
    echo -e "Average Loss\n" >> "results/summary"
    for((i=0;i<$epochs;i++))
    do 
-      grep "epoch,$i" results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f5 | awk '{ sum += $1; n++ } END { if (n > 0) print "'$i' = " sum / n ; }' >> results/summary
+      grep "epoch,$i" results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f7 | awk '{ sum += $1; n++ } END { if (n > 0) print "'$i' = " sum / n ; }' >> results/summary
    done
    echo "" >> "results/summary"
 done
