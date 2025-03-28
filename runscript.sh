@@ -172,13 +172,22 @@ do
       sleep 2
       echo "nc_output count = `cat nc_output.txt | wc -l`"
    done
-   read
+#   read
+   
+   echo "$currentworldsize,$2,$3,$K,$runid,$x" > "results/$currentworldsize-$averager-$epochs-$runid-$x"
+   echo -e "******************\n" >> "results/$currentworldsize-$averager-$epochs-$runid-$x"
+   bash applytoallcontainers.sh "cat /logs/$currentworldsize-$averager-$epochs-$runid-$x;echo" >> "results/$currentworldsize-$averager-$epochs-$runid-$x"
+   echo -e "Result..\n"
+   cat results/$currentworldsize-$averager-$epochs-$runid-$x
+   echo "$currentworldsize,$2,$3,$K,$runid,$x" >> "results/summary"
+   grep TIME results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f6 | awk '{ sum += $1; n++ } END { if (n > 0) print "Average time taken = " sum / n "\n"; }' >> results/summary
+   echo -e "Average Loss\n" >> "results/summary"
+   for((i=0;i<$epochs;i++))
+   do 
+      grep "epoch,$i" results/$currentworldsize-$averager-$epochs-$runid-$x | cut -d"," -f7 | awk '{ sum += $1; n++ } END { if (n > 0) print "'$i' = " sum / n ; }' >> results/summary
+   done
+   echo "" >> "results/summary"
 done
-
-read
-
-
-
 
 cp partition_sizes_original partition_sizes
 
