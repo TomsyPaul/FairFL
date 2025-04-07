@@ -1,32 +1,8 @@
 #! /bin/bash
-#cd ~/mydfl
-#git pull https://tomsypaul@github.com/TomsyPaul/mydfl.git 
 read -p "Enter Worldsize " worldsize
 
 #set hostips
 head -n $worldsize hostipsall > hostips
-
-##generate secrets (n-1)
-#>secrets
-#secretsum=0
-#for((i=1;i<$worldsize;i++))
-#do
-#thisrandom=`echo $RANDOM/100000 | bc -l|cut -c 1-8`
-#echo "$thisrandom" >> secrets
-#secretsum=`echo $secretsum+$thisrandom | bc -l|cut -c 1-8`
-#done
-##generate secrets (n-th)
-#echo "-$secretsum" >> secrets
-
-
-#generate partition_sizes
-#>partition_sizes
-#for((i=0;i<$worldsize;i++))
-#do
-#common=`echo 1.0/$worldsize | bc -l`
-#echo -n "$common, ">>partition_sizes 
-#done
-
 
 #rest of the process
 mkdir -p results

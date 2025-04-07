@@ -29,15 +29,24 @@ for((i=0;i<$keycount;i++))
 
 #set files to upload
 >files-to-upload
-echo layout-up >> files-to-upload
-echo layout-down >> files-to-upload
-echo keys >> files-to-upload
 echo find_local_count.py >> files-to-upload
 echo kld.py >> files-to-upload
-#echo run.py >> files-to-upload
 echo partition_sizes >> files-to-upload
+echo run.py >> files-to-upload
 
 tar -cvzf files-to-upload.gz -T files-to-upload
+#echo keys >> files-to-upload
+#echo partition_sizes >> files-to-upload
+
+#>partition_sizes
+#for((i=0;i<$size;i++))
+#do
+# common=`echo 1.0/$size | bc -l`
+# common=`echo 1.0/16 | bc -l`
+# echo -n "$common, ">>partition_sizes 
+#done   
+
+cumulative_size=0
 
 i=0
 while  read ip
@@ -110,11 +119,6 @@ do
    cp tempfile$x partition_sizes
    
    >files-to-upload
-   echo layout-up >> files-to-upload
-   echo layout-down >> files-to-upload
-   #echo secrets >> files-to-upload
-   echo keys >> files-to-upload
-   echo run.py >> files-to-upload
    echo partition_sizes >> files-to-upload
    
    currentworldsize=`grep -o "," tempfile$x | wc -l`
@@ -122,16 +126,6 @@ do
    
    cumulative_size=$((cumulative_size+currentworldsize))
    
-   #generate layouts
-   python3 treegen.py --n=$currentworldsize
-   #generate keys
-   >keys
-   keycount=`echo "$currentworldsize/4" |bc`
-   for((i=0;i<$keycount;i++))
-   do
-     echo "$RANDOM" >> keys
-   done
-
    tar -cvzf files-to-upload.gz -T files-to-upload
    
    i=0
