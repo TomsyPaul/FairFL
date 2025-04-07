@@ -89,9 +89,6 @@ def netcat(hostname, port, content):
 #    s.shutdown(socket.SHUT_WR)
 #    s.close()
 
-#def run(rank, size):
-#   """ Distributed function to be implemented later. """
-#   print("Rank = ", rank)
 def run(rank, size, epochs, K, averager, runid, roundid):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)

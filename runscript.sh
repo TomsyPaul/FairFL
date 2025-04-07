@@ -18,15 +18,6 @@ nc -k -u -l 23532  >> nc_local_counts.txt&
 >nc_result.txt
 nc -k -u -l 23632  >> nc_result.txt&
 
-python3 treegen.py --n=$size
-
->keys
-keycount=`echo "$size/4" |bc`
-for((i=0;i<$keycount;i++))
-   do
-     echo "$RANDOM" >> keys
-   done
-
 #set files to upload
 >files-to-upload
 echo find_local_count.py >> files-to-upload
@@ -38,13 +29,13 @@ tar -cvzf files-to-upload.gz -T files-to-upload
 #echo keys >> files-to-upload
 #echo partition_sizes >> files-to-upload
 
-#>partition_sizes
-#for((i=0;i<$size;i++))
-#do
-# common=`echo 1.0/$size | bc -l`
+>partition_sizes
+for((i=0;i<$size;i++))
+do
+ common=`echo 1.0/$size | bc -l`
 # common=`echo 1.0/16 | bc -l`
-# echo -n "$common, ">>partition_sizes 
-#done   
+ echo -n "$common, ">>partition_sizes 
+done   
 
 cumulative_size=0
 
