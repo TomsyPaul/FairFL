@@ -106,179 +106,14 @@ def partition_dataset():
     return train_set, bsz
 
 def basic_average_gradients(model):
-    """ Gradient averaging using Binomial Tree. """
+    """ Gradient averaging using allreduce."""
 #    print("Using DFL")
     size = dist.get_world_size()
     rank = dist.get_rank()
-    with open('layout-up', newline='') as csvfile1:
-        btreedata1 = list(csv.reader(csvfile1))
-    with open('layout-down', newline='') as csvfile2:
-        btreedata2 = list(csv.reader(csvfile2))
-
     for param in model.parameters():
-#        if type(param) is torch.Tensor:
-            model.mybuf=copy.deepcopy(param.grad.data)
-#            model.testbuf=torch.tensor(np.zeros(1))
-            #Tree Upward
-#           for i in range(int(math.log2(size))):
-#           for i in range(len(btreedata)):
-            for currentrow in btreedata1:
-                         if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                           
-                         elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data+=model.mybuf
-
-#Tree Downward
-
-            for currentrow in btreedata2:
-                        if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                        elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data=model.mybuf
-#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
             param.grad.data /= size
 
-nextadjustment=None
-
-def getnextadjustment(key):
-    newstring=key
-    while True:
-        newstring=str(int(sha256(newstring.encode('utf-8')).hexdigest(),16))
-        strlength=len(newstring)
-        for i in range(strlength-4):
-#           yield newstring[i:i+4]
-#            yield '0.'+newstring[i:i+4]
-            yield '0.'+newstring[i:i+4]
-        newstring=newstring[strlength-4:strlength]
-          
-
-    
-def set_leaf_pair_adder(rank, size, model):
-    with open('layout-up', newline='') as csvfile1:
-        btreedata1 = list(csv.reader(csvfile1))
-    edge_dest=[currentrow[1] for currentrow in btreedata1]
-    if str(rank) not in edge_dest:
-        model.aux["isleaf"]=True
-        if rank % 4 == 0:           
-           model.aux["adder"]=True
-           model.aux["partner"] = rank + 2
-        else:
-           model.aux["adder"]=False   
-           model.aux["partner"] = rank - 2        
-    else:
-        model.aux["isleaf"]=False    
-            
-
-def my_average_gradients(model):
-    """ Gradient averaging using Binomial Tree with SS """
-#    print("Using DFL")
-    size = dist.get_world_size()
-    rank = dist.get_rank()
-    with open('layout-up', newline='') as csvfile1:
-        btreedata1 = list(csv.reader(csvfile1))
-    with open('layout-down', newline='') as csvfile2:
-        btreedata2 = list(csv.reader(csvfile2))
-    
-    global nextadjustment
-    global cumulativeoverhead
-        
-    for param in model.parameters():
-#        if type(param) is torch.Tensor:
-            model.mybuf=copy.deepcopy(param.grad.data)
-#            model.testbuf=torch.tensor(np.zeros(1))
-#            additive = model.secret
-            additive = 0.0
-            overhead_starttime=time.time()
-            if model.aux["isleaf"] == True:
-                if model.aux["adder"] == True:
-                    additive += float(next(nextadjustment))
-                else:
-                    additive -= float(next(nextadjustment))
-            param.grad.data += additive
-            overhead_endtime=time.time()
-            cumulativeoverhead += (overhead_endtime - overhead_starttime)
-
-#Tree Upward
-#           for i in range(int(math.log2(size))):
-#           for i in range(len(btreedata)):
-            for currentrow in btreedata1:
-                         if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                           
-                         elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data+=model.mybuf
-
-#Tree Downward
-
-            for currentrow in btreedata2:
-                        if int(currentrow[0]) == rank:
-                           dist.send(tensor=param.grad.data,dst=int(currentrow[1]))
-                        elif int(currentrow[1]) == rank:
-                           dist.recv(tensor=model.mybuf,src=int(currentrow[0]))
-                           param.grad.data=model.mybuf
-#           dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
-            param.grad.data /= size
-
-def Add_SS(v, n, seed):
-    vlist = []
-    rnd=Random()
-    rnd.seed(seed)
-    r=[]
-    for i in range(n):
-        r += [rnd.random()]
-    vstar = v/n
-    for i in range(n-1):
-        vlist += [vstar + r[i] - r[i+1]]
-    vlist += [vstar + r[n-1] - r[0]]
-    return vlist    
-
-def their_average_gradients(model):
-    """ Gradient averaging using LiPFed """
-    size = dist.get_world_size()
-    rank = dist.get_rank()
-    with open('layout', newline='') as csvfile1:
-        btreedata1 = list(csv.reader(csvfile1))
-    seedvalue=100
-    for param in model.parameters():
-            first_receiving = True
-            model.mybuf=copy.deepcopy(param.grad.data)
-            model.splitbuf=copy.deepcopy(param.grad.data)
-
-            #Split and Send
-
-            edge_source=[currentrow[0] for  currentrow in btreedata1]
-
-            #splits give the number of edges of a node - the number of splits of parameters, split[i]=edges connected to i
-            splits=[edge_source.count(str(i)) for i in range(size)]
-            
-            #Send splits.. also receive :-)  Here was a bug when there were two for loops in place of the while..
-            rowindex=0
-            while rowindex < len(btreedata1):
-                         if int(btreedata1[rowindex][0]) == rank:
-                           number_of_splits=splits[rank]
-                           splitparam=Add_SS(param.grad.data, number_of_splits, seedvalue)
-                           for j in range(number_of_splits):
-                               targetnode=int(btreedata1[rowindex][1])
-                               dist.send(tensor=splitparam[j],dst=targetnode)
-                               rowindex += 1
-                         elif int(btreedata1[rowindex][1]) == rank:
-                           dist.recv(tensor=model.splitbuf,src=int(btreedata1[rowindex][0]))
-                           if first_receiving == True:
-                                model.mybuf=copy.deepcopy(model.splitbuf)
-                                first_receiving = False
-                           else:     
-                                model.mybuf+=model.splitbuf
-                           rowindex += 1
-                         else:
-                           rowindex += 1       
-#            dist.barrier()
-            dist.all_reduce(model.mybuf, op=dist.reduce_op.SUM)
-            param.grad.data = model.mybuf
-            param.grad.data /= size
 
 #https://stackoverflow.com/questions/1908878/netcat-implementation-in-python
 def netcat(hostname, port, content):
@@ -311,20 +146,7 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d_%H-%M-%S')
     starttime = time.time()
     
-    global nextadjustment
     global cumulativeoverhead
-    if averager == "DFLMSS":
-        set_leaf_pair_adder(rank, size, model)
-#        with open('secrets', newline='') as csvfile3:
-#            thesecrets = list(csv.reader(csvfile3))
-#            model.secret=float(thesecrets[rank][0])
-        if model.aux["isleaf"] == True:
-            with open('keys', newline='') as csvfile4:
-                allkeys = list(csv.reader(csvfile4))
-                model.aux["key"]=allkeys[rank//4][0]
-            nextadjustment = getnextadjustment(model.aux["key"])
-            
-
     
     for epoch in range(epochs):
         epoch_loss = 0.0
@@ -341,10 +163,6 @@ def run(rank, size, epochs, K, averager, runid, roundid):
             if (skip % K) == 0:
                if averager == "DFLBASIC":
                   basic_average_gradients(model)
-               elif averager == "DFLMSS":
-                  my_average_gradients(model)                  
-               elif averager == "DFLTSS":
-                  their_average_gradients(model)
             optimizer.step()
         print('Rank ',
             dist.get_rank(), ', epoch ', epoch, ': ',
@@ -355,8 +173,6 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     logging.info(f"Rank,{rank},round,{roundid},TIME,{endtime-starttime:.4f}")
     torch.save(model.state_dict(), runid+"round-"+str(roundid))   
     latesttime = time.time()
-#    logging.info(f"Rank,{rank},SAVETIME,{latesttime-endtime:.4f}")
-#    logging.info(f"Rank,{rank},SSOVERHEAD,{cumulativeoverhead:.4f}")
     coordinator="172.16.64.126"
     netcat(coordinator,23432,f"{rank}\n".encode("utf-8"))
 

@@ -49,11 +49,6 @@ do
    cp tempfile$x partition_sizes
    
    >files-to-upload
-   echo layout-up >> files-to-upload
-   echo layout-down >> files-to-upload
-   #echo secrets >> files-to-upload
-   echo keys >> files-to-upload
-   #echo run.py >> files-to-upload
    echo partition_sizes >> files-to-upload
    
    currentworldsize=`grep -o "," tempfile$x | wc -l`
