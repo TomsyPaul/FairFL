@@ -16,13 +16,13 @@ nc -k -u -l 23432  >> nc_output.txt&
 echo run.py >> files-to-upload
 #echo partition_sizes >> files-to-upload
 
->partition_sizes
-for((i=0;i<$size;i++))
-do
+#>partition_sizes
+#for((i=0;i<$size;i++))
+#do
 # common=`echo 1.0/$size | bc -l`
- common=`echo 1.0/16 | bc -l`
- echo -n "$common, ">>partition_sizes 
-done   
+# common=`echo 1.0/16 | bc -l`
+# echo -n "$common, ">>partition_sizes 
+#done   
 
 cumulative_size=0
 
