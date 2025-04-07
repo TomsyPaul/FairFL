@@ -25,10 +25,6 @@ echo kld.py >> files-to-upload
 echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
 
-tar -cvzf files-to-upload.gz -T files-to-upload
-#echo keys >> files-to-upload
-#echo partition_sizes >> files-to-upload
-
 >partition_sizes
 for((i=0;i<$size;i++))
 do
@@ -36,6 +32,10 @@ do
 # common=`echo 1.0/16 | bc -l`
  echo -n "$common, ">>partition_sizes 
 done   
+
+tar -cvzf files-to-upload.gz -T files-to-upload
+#echo keys >> files-to-upload
+#echo partition_sizes >> files-to-upload
 
 cumulative_size=0
 
