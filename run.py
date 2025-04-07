@@ -111,7 +111,7 @@ def basic_average_gradients(model):
     size = dist.get_world_size()
     rank = dist.get_rank()
     for param in model.parameters():
-            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+            dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
             param.grad.data /= size
 
 
