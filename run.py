@@ -42,19 +42,20 @@ class Partition(object):
 class DataPartitioner(object):
     """ Partitions a dataset into different chuncks. """
 
-    def __init__(self, data, sizes=[0.7, 0.2, 0.1], seed=1234):
+    def __init__(self, data, indices=[[0,1,2],[3,4,5,6],[7,8,9]], seed=1234):
         self.data = data
         self.partitions = []
-        rng = Random()
-        rng.seed(seed)
-        data_len = len(data)
-        indexes = [x for x in range(0, data_len)]
-        rng.shuffle(indexes)
+#        rng = Random()
+#        rng.seed(seed)
+#        data_len = len(data)
+#        indexes = [x for x in range(0, data_len)]
+#        rng.shuffle(indexes)
 
-        for frac in sizes:
-            part_len = int(frac * data_len)
-            self.partitions.append(indexes[0:part_len])
-            indexes = indexes[part_len:]
+        for i in indices:
+#            part_len = len(i)
+#            self.partitions.append(indexes[0:part_len])
+             self.partitions.append(i)
+#            indexes = indexes[part_len:]
 
     def use(self, partition):
         return Partition(self.data, self.partitions[partition])
@@ -96,13 +97,15 @@ def partition_dataset():
     size = dist.get_world_size()
     bsz = 128 // size
 #    partition_sizes = [1.0 / size for _ in range(size)]
-    with open('partition_sizes', newline='') as csvfile1:
-        partition_sizes = list(csv.reader(csvfile1))
-    partition_sizes=[float(partition_sizes[0][i]) for i in range(size)]    
-    partition = DataPartitioner(dataset, partition_sizes)
+    with open('indicesfile', newline='') as csvfile1:
+        partition_indices = list(csv.reader(csvfile1))
+    for i in range(len(partition_indices)):
+        partition_indices[i]=partition_indices[i][:-1]
+        partition_indices[i]=[int(partition_indices[i][j]) for j in range(len(partition_indices[i]))]
+    partition = DataPartitioner(dataset, partition_indices)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
+        partition, batch_size=bsz, shuffle=False)
     return train_set, bsz
 
 def basic_average_gradients(model):
