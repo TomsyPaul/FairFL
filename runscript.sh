@@ -128,6 +128,7 @@ do
    
    >files-to-upload
    echo partition_sizes >> files-to-upload
+   echo indicesfile >> files-to-upload
    
    currentworldsize=`grep -o "," tempfile$x | wc -l`
    head -n $currentworldsize hostips_sorted > selected_from_sorted
