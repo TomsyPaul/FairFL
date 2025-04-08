@@ -39,12 +39,19 @@ classorder.sort(key=lambda s:s[1])
 classsizes=[l.count(i) for i in (classorder[j][0] for j in range(k))]
 
 rounds=len(classsizes)
-
+datasize=60000
+factor=0
 for i in range(rounds):
    file1=open("tempfile"+str(i),"w")
+   file2=open("indicesfile"+str(i),"w")
    for item in range(sum(classsizes)):
      file1.write(str(float(1)/(size*rounds))+",")
+     for x in range(datasize//(size*rounds)):
+         file2.write(str(factor*(datasize//(size*rounds))+x)+",")
+     file2.write("\n")
+     factor+=1
    file1.close()
+   file2.close()
    classsizes.pop()
 print(rounds)
 

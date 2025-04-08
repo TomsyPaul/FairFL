@@ -8,6 +8,7 @@ K=$4
 runid=$5
 
 cp partition_sizes partition_sizes_original
+cp indicesfile indicesfile_original
 
 >nc_output.txt
 nc -k -u -l 23432  >> nc_output.txt&
@@ -24,6 +25,7 @@ echo find_local_count.py >> files-to-upload
 echo kld.py >> files-to-upload
 echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
+echo indicesfile >> files-to-upload
 
 >partition_sizes
 for((i=0;i<$size;i++))
@@ -32,6 +34,20 @@ do
 # common=`echo 1.0/16 | bc -l`
  echo -n "$common, ">>partition_sizes 
 done   
+
+#>indicesfile
+#DATASIZE=60000
+#for((i=0;i<$size;i++))
+#do
+# common=`echo $DATASIZE/$size | bc`
+# for((j=0;j<$common;j++))
+# do
+#  # common=`echo 1.0/16 | bc -l`
+#  data=`echo $i*$common+$j | bc -l`
+#  echo -n "$data,">>indicesfile 
+# done
+#echo "">>indicesfile 
+#done   
 
 tar -cvzf files-to-upload.gz -T files-to-upload
 #echo keys >> files-to-upload
@@ -108,6 +124,7 @@ for((x=0;x<rounds;x++))
 do
 
    cp tempfile$x partition_sizes
+   cp indicesfile$x indicesfile
    
    >files-to-upload
    echo partition_sizes >> files-to-upload
@@ -175,5 +192,6 @@ do
 done
 
 cp partition_sizes_original partition_sizes
+cp indicesfile_original indicesfile
 
 bash close-all-terminals.sh
