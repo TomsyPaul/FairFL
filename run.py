@@ -100,12 +100,12 @@ def partition_dataset():
     with open('indicesfile', newline='') as csvfile1:
         partition_indices = list(csv.reader(csvfile1))
     for i in range(len(partition_indices)):
-        partition_indices[i]=partition_indices[i][:-1]
-        partition_indices[i]=[int(partition_indices[i][j]) for j in range(len(partition_indices[i]))]
+        partition_indices[i]=partition_indices[i][:-1]#remove the empty value due to comma at the end
+        partition_indices[i]=[int(partition_indices[i][j]) for j in range(len(partition_indices[i]))]#convert from string to int values
     partition = DataPartitioner(dataset, partition_indices)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=False)
+        partition, batch_size=bsz, shuffle=True)
     return train_set, bsz
 
 def basic_average_gradients(model):
