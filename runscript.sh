@@ -7,22 +7,51 @@ averager=$3
 K=$4
 runid=$5
 
+cp partition_sizes partition_sizes_original
+cp indicesfile indicesfile_original
+
 >nc_output.txt
 nc -k -u -l 23432  >> nc_output.txt&
 
+>nc_local_counts.txt
+nc -k -u -l 23532  >> nc_local_counts.txt&
+
+>nc_result.txt
+nc -k -u -l 23632  >> nc_result.txt&
+
 #set files to upload
 >files-to-upload
-#echo keys >> files-to-upload
+echo find_local_count.py >> files-to-upload
+echo kld.py >> files-to-upload
+echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
-#echo partition_sizes >> files-to-upload
+echo indicesfile >> files-to-upload
 
-#>partition_sizes
+>partition_sizes
+for((i=0;i<$size;i++))
+do
+ common=`echo 1.0/$size | bc -l`
+# common=`echo 1.0/16 | bc -l`
+ echo -n "$common, ">>partition_sizes 
+done   
+
+#>indicesfile
+#DATASIZE=60000
 #for((i=0;i<$size;i++))
 #do
-# common=`echo 1.0/$size | bc -l`
-# common=`echo 1.0/16 | bc -l`
-# echo -n "$common, ">>partition_sizes 
+# common=`echo $DATASIZE/$size | bc`
+# for((j=0;j<$common;j++))
+# do
+#  # common=`echo 1.0/16 | bc -l`
+#  data=`echo $i*$common+$j | bc -l`
+#  echo -n "$data,">>indicesfile 
+# done
+#echo "">>indicesfile 
 #done   
+
+tar -cvzf files-to-upload.gz -T files-to-upload
+#echo keys >> files-to-upload
+#echo partition_sizes >> files-to-upload
 
 cumulative_size=0
 
@@ -33,45 +62,80 @@ do
  then
    if [ $coding == 'Y' ]
    then
-   while read filename
-   do
-      scp $filename tomsy@$ip:mydfl
-      ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/$filename c$i:/workspace/$filename
-   done < files-to-upload      
+      scp files-to-upload.gz tomsy@$ip:mydfl
+      ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/files-to-upload.gz c$i:/workspace/files-to-upload.gz
+      ssh -n tomsy@$ip docker exec c$i tar -C /workspace/ -xz -f /workspace/files-to-upload.gz
    fi   
  ((i++))     	  
  fi
 done < hostips
 
-cp hostips hostips_backup
-cp partition_sizes partition_sizes_original
-python3 generate_partitions.py --size=$size
+i=0
+while  read ip
+do
+     if [ ! -z $ip ]
+     then
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python find_local_count.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
+        ((i++))     	
+     fi
+done < hostips
 
-rounds=`cat partition_sizes |tr -d " " |  tr "," "\n" | head -n $size | sort -n | uniq|wc -l`
+while [[ `cat nc_local_counts.txt | wc -l` < $size ]]
+do
+    sleep 1
+    echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
+done
+#read
+#bash close-all-terminals.sh
+
+i=0
+while  read ip
+do
+     if [ ! -z $ip ]
+     then
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
+        ((i++))     	
+     fi
+done < hostips
+
+
+
+while [[ `cat nc_result.txt | wc -l` < $size ]]
+do
+    sleep 1
+    echo "nc_result = `cat nc_result.txt | wc -l`"
+done
+
+
+
+sort -n -t"," -k2 nc_result.txt > sorted_result.txt
+cat sorted_result.txt | cut -d"," -f2 > testout
+for i in `cut sorted_result.txt -d"," -f1`
+do 
+head -n $((i+1)) hostips | tail -n 1
+done > hostips_sorted
+
+cumulative_size=0
+
+rounds=`python3 generate_partitions.py --size=$size`
 epochs=`echo $epochs/$rounds | bc`
 
 for((x=0;x<rounds;x++))
 do
 
    cp tempfile$x partition_sizes
+   cp indicesfile$x indicesfile
    
    >files-to-upload
    echo partition_sizes >> files-to-upload
+   echo indicesfile >> files-to-upload
    
    currentworldsize=`grep -o "," tempfile$x | wc -l`
-   head -n $currentworldsize hostips_backup > hostips
+   head -n $currentworldsize hostips_sorted > selected_from_sorted
    
    cumulative_size=$((cumulative_size+currentworldsize))
    
-   #generate layouts
-   python3 treegen.py --n=$currentworldsize
-   #generate keys
-   >keys
-   keycount=`echo "$currentworldsize/4" |bc`
-   for((i=0;i<$keycount;i++))
-   do
-     echo "$RANDOM" >> keys
-   done
+   tar -cvzf files-to-upload.gz -T files-to-upload
    
    i=0
    while  read ip
@@ -79,41 +143,39 @@ do
      if [ ! -z $ip ]
      then
         if [ $coding == 'Y' ]
-           then
-              while read filename
-              do
-                    scp $filename tomsy@$ip:mydfl
-                    ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/$filename c$i:/workspace/$filename
-              done < files-to-upload      
+        then
+                    j=`grep -n -w $ip hostips | cut -d ":" -f1`
+                    scp files-to-upload.gz tomsy@$ip:mydfl
+                    ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/files-to-upload.gz c$((j-1)):/workspace/files-to-upload.gz
+                    ssh -n tomsy@$ip docker exec c$((j-1)) tar -C /workspace/ -xz -f /workspace/files-to-upload.gz
        fi   
        ((i++))     	  
      fi
-   done < hostips
+   done < selected_from_sorted
+   
+   ipoffirst=`head -n 1 selected_from_sorted`
+   jfirst=`grep -n -w $ipoffirst hostips | cut -d ":" -f1`
    
    i=0
    while  read ip
    do
      if [ ! -z $ip ]
      then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python run.py --rank=$i --size=$currentworldsize --epochs=$epochs --averager=$averager --K=$currentworldsize --runid=$runid --round=$x; echo Output of $i; exec bash"   
+        j=`grep -n -w $ip hostips | cut -d ":" -f1`
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$((j-1)) python run.py --rank=$i --size=$currentworldsize --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=$x --masteraddr=n$((jfirst-1)) --masterport=12${x}21; echo Output of $((j-1)); exec bash"   
         ((i++))     	
     fi
-   done < hostips
-
+   done < selected_from_sorted
+   
    echo "Completed Round $x"
    echo "Cumulative Size = $cumulative_size"
    
-   #read
-   #for((i=0;i<$currentworldsize;i++))
-   #do
-   #nc -l 1234 
-   #done
    while [[ `cat nc_output.txt | wc -l` < $cumulative_size ]]
    do
-      sleep 1
+      sleep 2
       echo "nc_output count = `cat nc_output.txt | wc -l`"
    done
-   
+#   read
    
    echo "$currentworldsize,$2,$3,$K,$runid,$x" > "results/$currentworldsize-$averager-$epochs-$runid-$x"
    echo -e "******************\n" >> "results/$currentworldsize-$averager-$epochs-$runid-$x"
@@ -129,7 +191,8 @@ do
    done
    echo "" >> "results/summary"
 done
-cp partition_sizes_original partition_sizes
-cp hostips_backup hostips
-bash close-all-terminals.sh
 
+cp partition_sizes_original partition_sizes
+cp indicesfile_original indicesfile
+
+bash close-all-terminals.sh
