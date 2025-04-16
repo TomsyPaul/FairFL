@@ -34,13 +34,16 @@ for k in range(2,size-1):
       best_partition=fits[k-2].labels_
       break
 l=list(best_partition)
+
+partition_file=open("best_clustering","w")
+partition_file.write("Best Clustering is..\n"+str(l))
+partition_file.close()
+
 classorder=[(i,l.index(i)) for i in range(k)]
 classorder.sort(key=lambda s:s[1])
 classsizes=[l.count(i) for i in (classorder[j][0] for j in range(k))]
 
 rounds=len(classsizes)
-
-factor=0
 
 with open('indicesfile', newline='') as csvfile1:
     partition_indices = list(csv.reader(csvfile1))
@@ -51,13 +54,16 @@ for i in range(len(partition_indices)):
 datasize=60000
 
 for i in range(rounds):
+   file1=open("tempfile"+str(i),"w")
    file2=open("indicesfile"+str(i),"w")
    for item in range(sum(classsizes)):
      newlength=len(partition_indices[item])//rounds
      currentindex=i*newlength
+     file1.write(str(float(1)/(size*rounds))+",")
      for x in range(newlength):
          file2.write(str(partition_indices[item][currentindex+x])+",")
      file2.write("\n")
+   file1.close()
    file2.close()
    classsizes.pop()
 print(rounds)
