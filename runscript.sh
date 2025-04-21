@@ -21,33 +21,9 @@ nc -k -u -l 23632  >> nc_result.txt&
 
 #set files to upload
 >files-to-upload
-echo find_local_count.py >> files-to-upload
-echo kld.py >> files-to-upload
-echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
 echo indicesfile >> files-to-upload
 
->partition_sizes
-for((i=0;i<$size;i++))
-do
- common=`echo 1.0/$size | bc -l`
-# common=`echo 1.0/16 | bc -l`
- echo -n "$common, ">>partition_sizes 
-done   
-
-#>indicesfile
-#DATASIZE=60000
-#for((i=0;i<$size;i++))
-#do
-# common=`echo $DATASIZE/$size | bc`
-# for((j=0;j<$common;j++))
-# do
-#  # common=`echo 1.0/16 | bc -l`
-#  data=`echo $i*$common+$j | bc -l`
-#  echo -n "$data,">>indicesfile 
-# done
-#echo "">>indicesfile 
-#done   
 
 tar -cvzf files-to-upload.gz -T files-to-upload
 #echo keys >> files-to-upload
@@ -70,50 +46,6 @@ do
  fi
 done < hostips
 
-i=0
-while  read ip
-do
-     if [ ! -z $ip ]
-     then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python find_local_count.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
-        ((i++))     	
-     fi
-done < hostips
-
-while [[ `cat nc_local_counts.txt | wc -l` < $size ]]
-do
-    sleep 1
-    echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
-done
-#read
-#bash close-all-terminals.sh
-
-i=0
-while  read ip
-do
-     if [ ! -z $ip ]
-     then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
-        ((i++))     	
-     fi
-done < hostips
-
-
-
-while [[ `cat nc_result.txt | wc -l` < $size ]]
-do
-    sleep 1
-    echo "nc_result = `cat nc_result.txt | wc -l`"
-done
-
-
-
-sort -n -t"," -k2 nc_result.txt > sorted_result.txt
-cat sorted_result.txt | cut -d"," -f2 > testout
-for i in `cut sorted_result.txt -d"," -f1`
-do 
-head -n $((i+1)) hostips | tail -n 1
-done > hostips_sorted
 
 cumulative_size=0
 
@@ -123,15 +55,13 @@ epochs=`echo $epochs/$rounds | bc`
 for((x=0;x<rounds;x++))
 do
 
-   cp tempfile$x partition_sizes
    cp indicesfile$x indicesfile
    
    >files-to-upload
-   echo partition_sizes >> files-to-upload
    echo indicesfile >> files-to-upload
    
-   currentworldsize=`grep -o "," tempfile$x | wc -l`
-   head -n $currentworldsize hostips_sorted > selected_from_sorted
+   currentworldsize=`cat indicesfile$x | wc -l`
+   head -n $currentworldsize hostips > selected_hosts
    
    cumulative_size=$((cumulative_size+currentworldsize))
    
@@ -144,28 +74,23 @@ do
      then
         if [ $coding == 'Y' ]
         then
-                    j=`grep -n -w $ip hostips | cut -d ":" -f1`
                     scp files-to-upload.gz tomsy@$ip:mydfl
-                    ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/files-to-upload.gz c$((j-1)):/workspace/files-to-upload.gz
-                    ssh -n tomsy@$ip docker exec c$((j-1)) tar -C /workspace/ -xz -f /workspace/files-to-upload.gz
+                    ssh -n tomsy@$ip docker cp /home/tomsy/mydfl/files-to-upload.gz c$i:/workspace/files-to-upload.gz
+                    ssh -n tomsy@$ip docker exec c$i tar -C /workspace/ -xz -f /workspace/files-to-upload.gz
        fi   
        ((i++))     	  
      fi
-   done < selected_from_sorted
-   
-   ipoffirst=`head -n 1 selected_from_sorted`
-   jfirst=`grep -n -w $ipoffirst hostips | cut -d ":" -f1`
+   done < selected_hosts
    
    i=0
    while  read ip
    do
      if [ ! -z $ip ]
      then
-        j=`grep -n -w $ip hostips | cut -d ":" -f1`
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$((j-1)) python run.py --rank=$i --size=$currentworldsize --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=$x --masteraddr=n$((jfirst-1)) --masterport=12${x}21; echo Output of $((j-1)); exec bash"   
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python run.py --rank=$i --size=$currentworldsize --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=$x --masteraddr=n0 --masterport=12${x}21; echo Output of $i; exec bash"   
         ((i++))     	
     fi
-   done < selected_from_sorted
+   done < selected_hosts
    
    echo "Completed Round $x"
    echo "Cumulative Size = $cumulative_size"
@@ -192,7 +117,6 @@ do
    echo "" >> "results/summary"
 done
 
-cp partition_sizes_original partition_sizes
 cp indicesfile_original indicesfile
 
 bash close-all-terminals.sh
