@@ -42,3 +42,5 @@ for i in range(rounds):
    uniquesizes=list(set(newpartysizes))
    uniquesizes.sort()
    currentpartysizes=[uniquesizes[0] for _ in newpartysizes]
+
+print(rounds)
