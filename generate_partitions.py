@@ -1,6 +1,7 @@
 #! /bin/python3
 import csv
 import argparse
+import random
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -53,17 +54,16 @@ for i in range(len(partition_indices)):
 
 newpartysizes=[len(partition_indices[item]) for item in range(sum(classsizes))]
 
-currentindex=0
 for i in range(rounds):
    file2=open("indicesfile"+str(i),"w")
    newlength=min(newpartysizes)
    for item in range(sum(classsizes)):
      for x in range(newlength):
-         file2.write(str(partition_indices[item][currentindex+x])+",")
+         file2.write(str(random.choice(partition_indices[item]))+",")
      file2.write("\n")
    file2.close()
-   currentindex+=newlength
    classsizes.pop()
-   newpartysizes=[newpartysizes[item]-newlength for item in range(sum(classsizes))]
+#   newpartysizes=[newpartysizes[item]-newlength for item in range(sum(classsizes))]
+   newpartysizes=[newpartysizes[item] for item in range(sum(classsizes))]
 print(rounds)
 
