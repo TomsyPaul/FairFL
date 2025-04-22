@@ -7,7 +7,6 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=int)
-parser.add_argument("--rounds", type=int)
 args = parser.parse_args()
 size = int(args.size)
 

@@ -7,7 +7,6 @@ averager=$3
 K=$4
 runid=$5
 
-cp partition_sizes partition_sizes_original
 cp indicesfile indicesfile_original
 
 >nc_output.txt
