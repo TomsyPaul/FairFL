@@ -26,8 +26,8 @@ import socket
 from math import log2
 
           
-#def kld(p,q):
-#    return sum(p[i] * log2(p[i]/q[i]) for i in range(len(p)))
+def kld(p,q):
+    return sum(p[i] * log2(p[i]/q[i]) for i in range(len(p)))
 
 
 
@@ -53,15 +53,14 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     dist.all_reduce(global_copy, op=dist.reduce_op.SUM)
     
     global_counts=[int(global_copy[i]) for i in range(len(global_copy))]
-#    p=[float(global_counts[i])/sum(global_counts) for i in range(10)]
-#    q=[float(local_counts[i])/sum(local_counts) for i in range(10)]
-    N=sum(global_counts)
+    p=[float(global_counts[i])/sum(global_counts) for i in range(10)]
+    q=[float(local_counts[i])/sum(local_counts) for i in range(10)]
+#    N=sum(global_counts)
     n=sum(local_counts)
-    X=(1/N)*sum([global_counts[i]*log2(global_counts[i]/local_counts[i]) for i in range(len(global_counts))])
-    kld_plus_sum=X+log2((n/N)**((n-1)/n))
-    
+#    X=(1/N)*sum([global_counts[i]*log2(global_counts[i]/local_counts[i]) for i in range(len(global_counts))])
+#    kld_plus_sum=X+log2((n/N)**((n-1)/n))
     coordinator="172.16.64.126"
-    netcat(coordinator,23632,f"{rank},{kld_plus_sum}\n".encode("utf-8"))
+    netcat(coordinator,23632,f"{rank},{kld(p,q)/n}\n".encode("utf-8"))
 #    netcat(coordinator,23632,f"{rank},{kld(p,q)}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
