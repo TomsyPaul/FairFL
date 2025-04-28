@@ -80,6 +80,11 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
+if [[ `grep -c e nc_result.txt` -gt 0 ]]
+then
+sed -i -e 's\e\*10^\g' nc_result.txt
+fi
+
 >temp_nc_result.txt
 while IFS=',' read t_rank t_kld
 do 
