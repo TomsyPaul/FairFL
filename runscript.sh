@@ -60,6 +60,8 @@ do
     echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
 done
 
+nmax=`sort -n -t"," -k2 nc_local_counts.txt | tail -n 1 | cut -d"," -f2`
+
 i=0
 while  read ip
 do
@@ -78,9 +80,15 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
+>temp_nc_result.txt
+while IFS=',' read t_rank t_kld
+do 
+t_kld_nmax=`echo $t_kld\*$nmax | bc -l`
+echo $t_rank,$t_kld_nmax>>temp_nc_result.txt
+done < nc_result.txt
 
 
-sort -n -t"," -k2 nc_result.txt > sorted_result.txt
+sort -n -t"," -k2 temp_nc_result.txt > sorted_result.txt
 cat sorted_result.txt | cut -d"," -f2 > testout
 
 for i in `cut sorted_result.txt -d"," -f1`
