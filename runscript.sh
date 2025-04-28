@@ -80,7 +80,7 @@ do
      fi
 done < hostips
 
-while [[ `cat nc_local_counts.txt | wc -l` < $size ]]
+while [[ `cat nc_local_counts.txt | wc -l` -lt $size ]]
 do
     sleep 1
     echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
@@ -100,7 +100,7 @@ done < hostips
 
 
 
-while [[ `cat nc_result.txt | wc -l` < $size ]]
+while [[ `cat nc_result.txt | wc -l` -lt $size ]]
 do
     sleep 1
     echo "nc_result = `cat nc_result.txt | wc -l`"
@@ -170,7 +170,7 @@ do
    echo "Completed Round $x"
    echo "Cumulative Size = $cumulative_size"
    
-   while [[ `cat nc_output.txt | wc -l` < $cumulative_size ]]
+   while [[ `cat nc_output.txt | wc -l` -lt $cumulative_size ]]
    do
       sleep 2
       echo "nc_output count = `cat nc_output.txt | wc -l`"

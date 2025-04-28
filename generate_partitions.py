@@ -1,6 +1,7 @@
 #! /bin/python3
 import csv
 import argparse
+import random
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -9,7 +10,7 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=int)
-#parser.add_argument("--rounds", type=int)
+parser.add_argument("--rounds", type=int)
 args = parser.parse_args()
 size = int(args.size)
 
@@ -47,25 +48,22 @@ rounds=len(classsizes)
 
 with open('indicesfile', newline='') as csvfile1:
     partition_indices = list(csv.reader(csvfile1))
-
 for i in range(len(partition_indices)):
     partition_indices[i]=partition_indices[i][:-1]#remove the empty value due to comma at the end
     partition_indices[i]=[int(partition_indices[i][j]) for j in range(len(partition_indices[i]))]#convert from string to int values
 
-datasize=60000
+newpartysizes=[len(partition_indices[item]) for item in range(sum(classsizes))]
 
 for i in range(rounds):
-   file1=open("tempfile"+str(i),"w")
    file2=open("indicesfile"+str(i),"w")
+   newlength=min(newpartysizes)
    for item in range(sum(classsizes)):
-     newlength=len(partition_indices[item])//rounds
-     currentindex=i*newlength
-     file1.write(str(float(1)/(size*rounds))+",")
      for x in range(newlength):
-         file2.write(str(partition_indices[item][currentindex+x])+",")
+         file2.write(str(random.choice(partition_indices[item]))+",")
      file2.write("\n")
-   file1.close()
    file2.close()
    classsizes.pop()
+#   newpartysizes=[newpartysizes[item]-newlength for item in range(sum(classsizes))]
+   newpartysizes=[newpartysizes[item] for item in range(sum(classsizes))]
 print(rounds)
 
