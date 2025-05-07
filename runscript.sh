@@ -106,12 +106,6 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
-if [[ `grep -c e nc_result.txt` -gt 0 ]]
-then
-sed -i -e 's\e\*10^\g' nc_result.txt
-fi
-
-
 sort -n -t"," -k2 nc_result.txt > sorted_result.txt
 cat sorted_result.txt | cut -d"," -f2 > testout
 for i in `cut sorted_result.txt -d"," -f1`
@@ -127,14 +121,14 @@ epochs=`echo $epochs/$rounds | bc`
 for((x=0;x<rounds;x++))
 do
 
-   cp tempfile$x partition_sizes
+#   cp tempfile$x partition_sizes
    cp indicesfile$x indicesfile
    
    >files-to-upload
-   echo partition_sizes >> files-to-upload
+#   echo partition_sizes >> files-to-upload
    echo indicesfile >> files-to-upload
    
-   currentworldsize=`grep -o "," tempfile$x | wc -l`
+   currentworldsize=`cat indicesfile | wc -l`
    head -n $currentworldsize hostips_sorted > selected_from_sorted
    
    cumulative_size=$((cumulative_size+currentworldsize))
@@ -196,7 +190,7 @@ do
    echo "" >> "results/summary"
 done
 
-cp partition_sizes_original partition_sizes
+#cp partition_sizes_original partition_sizes
 cp indicesfile_original indicesfile
 
 bash close-all-terminals.sh
