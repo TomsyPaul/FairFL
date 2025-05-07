@@ -88,8 +88,8 @@ fi
 >temp_nc_result.txt
 while IFS=',' read t_rank t_kld
 do 
-t_kld_nmax=`echo $t_kld\*$nmax | bc -l`
-echo $t_rank,$t_kld_nmax>>temp_nc_result.txt
+t_kld_nmax_square=`echo $t_kld\*$nmax\*$nmax | bc -l`
+echo $t_rank,$t_kld_nmax_square>>temp_nc_result.txt
 done < nc_result.txt
 
 
