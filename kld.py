@@ -59,7 +59,7 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     
     coordinator="172.16.64.126"
 #    netcat(coordinator,23632,f"{rank},{kld(p,q)+log2(sum(global_counts)/sum(local_counts))}\n".encode("utf-8"))
-    netcat(coordinator,23632,f"{rank},{kld(p,q)}\n".encode("utf-8"))
+    netcat(coordinator,23632,f"{rank},{chi_square(p,q)}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """
