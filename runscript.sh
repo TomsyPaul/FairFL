@@ -106,6 +106,10 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
+if [[ `grep -c e nc_result.txt` -gt 0 ]]
+then
+sed -i -e 's\e\*10^\g' nc_result.txt
+fi
 
 
 sort -n -t"," -k2 nc_result.txt > sorted_result.txt
