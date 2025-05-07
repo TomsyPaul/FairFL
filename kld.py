@@ -55,11 +55,13 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     global_counts=[int(global_copy[i]) for i in range(len(global_copy))]
     p=[float(global_counts[i])/sum(global_counts) for i in range(10)]
     q=[float(local_counts[i])/sum(local_counts) for i in range(10)]
-    
-    
+#    N=sum(global_counts)
+    n=sum(local_counts)
+#    X=(1/N)*sum([global_counts[i]*log2(global_counts[i]/local_counts[i]) for i in range(len(global_counts))])
+#    kld_plus_sum=X+log2((n/N)**((n-1)/n))
     coordinator="172.16.64.126"
 #    netcat(coordinator,23632,f"{rank},{kld(p,q)+log2(sum(global_counts)/sum(local_counts))}\n".encode("utf-8"))
-    netcat(coordinator,23632,f"{rank},{chi_square(p,q)}\n".encode("utf-8"))
+    netcat(coordinator,23632,f"{rank},{chi_square(p,q)/(n*n)}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """

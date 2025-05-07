@@ -103,7 +103,7 @@ def run(rank, size, epochs, K, averager, runid, roundid):
     f1.close()
     
     coordinator="172.16.64.126"
-    netcat(coordinator,23532,f"Rank={rank}, local_counts={local_counts}\n".encode("utf-8"))
+    netcat(coordinator,23532,f"{rank},{sum(local_counts)}\n".encode("utf-8"))
 
 def init_processes(rank, size, epochs, K, averager, runid, fn, roundid, backend='gloo'):
    """ Initialize the distributed environment. """
