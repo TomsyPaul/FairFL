@@ -26,8 +26,8 @@ import socket
 from math import log2
 
           
-def kld(p,q):
-    return sum(p[i] * log2(p[i]/q[i]) for i in range(len(p)))
+def chi_square(p,q):
+    return (sum((((p[i]-q[i])**2)/p[i]) for i in range(len(p))))/2
 
 
 
