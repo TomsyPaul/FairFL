@@ -7,7 +7,6 @@ averager=$3
 K=$4
 runid=$5
 
-cp partition_sizes partition_sizes_original
 cp indicesfile indicesfile_original
 
 >nc_output.txt
@@ -23,35 +22,10 @@ nc -k -u -l 23632  >> nc_result.txt&
 >files-to-upload
 echo find_local_count.py >> files-to-upload
 echo kld.py >> files-to-upload
-echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
 echo indicesfile >> files-to-upload
 
->partition_sizes
-for((i=0;i<$size;i++))
-do
- common=`echo 1.0/$size | bc -l`
-# common=`echo 1.0/16 | bc -l`
- echo -n "$common, ">>partition_sizes 
-done   
-
-#>indicesfile
-#DATASIZE=60000
-#for((i=0;i<$size;i++))
-#do
-# common=`echo $DATASIZE/$size | bc`
-# for((j=0;j<$common;j++))
-# do
-#  # common=`echo 1.0/16 | bc -l`
-#  data=`echo $i*$common+$j | bc -l`
-#  echo -n "$data,">>indicesfile 
-# done
-#echo "">>indicesfile 
-#done   
-
 tar -cvzf files-to-upload.gz -T files-to-upload
-#echo keys >> files-to-upload
-#echo partition_sizes >> files-to-upload
 
 cumulative_size=0
 
@@ -85,8 +59,8 @@ do
     sleep 1
     echo "nc_local_counts = `cat nc_local_counts.txt | wc -l`"
 done
-#read
-#bash close-all-terminals.sh
+
+nmax=`sort -n -t"," -k2 nc_local_counts.txt | tail -n 1 | cut -d"," -f2`
 
 i=0
 while  read ip
@@ -106,8 +80,29 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
-sort -g -t"," -k2 nc_result.txt > sorted_result.txt
+#Replacing e with *10^ for bc
+if [[ `grep -c e nc_result.txt` -gt 0 ]]
+then
+sed -i -e 's\e\*10^\g' nc_result.txt
+fi
+
+>temp_nc_result.txt
+while IFS=',' read t_rank t_kld
+do 
+t_kld_nmax_square=`echo $t_kld\*$nmax\*$nmax | bc -l`
+echo $t_rank,$t_kld_nmax_square>>temp_nc_result.txt
+done < nc_result.txt
+
+#setting back for python
+if [[ `grep -c ^ nc_result.txt` -gt 0 ]]
+then
+sed -i -e 's\*10^\e\g' nc_result.txt
+fi
+
+
+sort -g -t"," -k2 temp_nc_result.txt > sorted_result.txt
 cat sorted_result.txt | cut -d"," -f2 > testout
+
 for i in `cut sorted_result.txt -d"," -f1`
 do 
 head -n $((i+1)) hostips | tail -n 1
@@ -121,14 +116,12 @@ epochs=`echo $epochs/$rounds | bc`
 for((x=0;x<rounds;x++))
 do
 
-#   cp tempfile$x partition_sizes
    cp indicesfile$x indicesfile
    
    >files-to-upload
-#   echo partition_sizes >> files-to-upload
    echo indicesfile >> files-to-upload
    
-   currentworldsize=`cat indicesfile | wc -l`
+   currentworldsize=`cat indicesfile$x | wc -l`
    head -n $currentworldsize hostips_sorted > selected_from_sorted
    
    cumulative_size=$((cumulative_size+currentworldsize))
@@ -190,7 +183,6 @@ do
    echo "" >> "results/summary"
 done
 
-#cp partition_sizes_original partition_sizes
 cp indicesfile_original indicesfile
 
 bash close-all-terminals.sh
