@@ -106,7 +106,7 @@ do
     echo "nc_result = `cat nc_result.txt | wc -l`"
 done
 
-sort -n -t"," -k2 nc_result.txt > sorted_result.txt
+sort -g -t"," -k2 nc_result.txt > sorted_result.txt
 cat sorted_result.txt | cut -d"," -f2 > testout
 for i in `cut sorted_result.txt -d"," -f1`
 do 
