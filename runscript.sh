@@ -21,7 +21,7 @@ nc -k -u -l 23632  >> nc_result.txt&
 #set files to upload
 >files-to-upload
 echo find_local_count.py >> files-to-upload
-echo kld.py >> files-to-upload
+echo divergence.py >> files-to-upload
 echo run.py >> files-to-upload
 echo indicesfile >> files-to-upload
 
@@ -67,7 +67,7 @@ while  read ip
 do
      if [ ! -z $ip ]
      then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python divergence.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
         ((i++))     	
      fi
 done < hostips
@@ -86,10 +86,10 @@ sed -i -e 's\e\*10^\g' nc_result.txt
 fi
 
 >temp_nc_result.txt
-while IFS=',' read t_rank t_kld
+while IFS=',' read t_rank t_divergence
 do 
-t_kld_nmax_square=`echo $t_kld\*$nmax\*$nmax | bc -l`
-echo $t_rank,$t_kld_nmax_square>>temp_nc_result.txt
+t_divergence_nmax_square=`echo $t_divergence\*$nmax\*$nmax | bc -l`
+echo $t_rank,$t_divergence_nmax_square>>temp_nc_result.txt
 done < nc_result.txt
 
 
