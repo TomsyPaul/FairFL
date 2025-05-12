@@ -22,7 +22,7 @@ nc -k -u -l 23632  >> nc_result.txt&
 #set files to upload
 >files-to-upload
 echo find_local_count.py >> files-to-upload
-echo kld.py >> files-to-upload
+echo divergence.py >> files-to-upload
 echo partition_sizes >> files-to-upload
 echo run.py >> files-to-upload
 echo indicesfile >> files-to-upload
@@ -93,7 +93,7 @@ while  read ip
 do
      if [ ! -z $ip ]
      then
-        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python kld.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
+        gnome-terminal --window -- bash -c "ssh -n tomsy@$ip docker exec c$i python divergence.py --rank=$i --size=$size --epochs=$epochs --averager=$averager --K=$K --runid=$runid --roundid=0; echo Output of $i"   
         ((i++))     	
      fi
 done < hostips
