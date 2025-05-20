@@ -95,17 +95,9 @@ epochs=`echo $epochs/$rounds | bc`
 for((x=0;x<rounds;x++))
 do
 
-<<<<<<< HEAD
-#   cp tempfile$x partition_sizes
    cp indicesfile$x indicesfile
    
    >files-to-upload
-#   echo partition_sizes >> files-to-upload
-=======
-   cp indicesfile$x indicesfile
-   
-   >files-to-upload
->>>>>>> 345a283... KL runscript edited, removed partition_sizes
    echo indicesfile >> files-to-upload
    
    currentworldsize=`cat indicesfile | wc -l`
@@ -169,10 +161,6 @@ do
    echo "" >> "results/summary"
 done
 
-<<<<<<< HEAD
-#cp partition_sizes_original partition_sizes
-=======
->>>>>>> 345a283... KL runscript edited, removed partition_sizes
 cp indicesfile_original indicesfile
 
 bash close-all-terminals.sh
